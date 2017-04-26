@@ -1,0 +1,9 @@
+%%writefile {{ output_fn }}
+#!/bin/bash
+METADATA={{ metadata_filename }}
+DATA_HOME={{ root_dir }}/data/{{ lib_type }}
+mkdir -p ${DATA_HOME}/raw_reads/
+read CORE_USER CORE_PROJECT CORE_PASS <<< $(cut -f 1,2,3 $METADATA | tail -n+2 | sort -u)
+cd ${DATA_HOME}/raw_reads/
+lftp -u ${CORE_USER},${CORE_PASS} -e "mirror --only-missing ${CORE_USER}/${CORE_PROJECT}; exit" "sftp://${CORE_USER}@dnaseq2.igsp.duke.edu"
+exit

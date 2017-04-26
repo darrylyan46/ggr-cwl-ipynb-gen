@@ -1,0 +1,69 @@
+%%writefile {{ output_fn }}
+#!/bin/bash
+ORDER={{ project_name }}
+PROCESSED_DATA_DIR={{ root_dir }}/data/{{ lib_type }}/processed_raw_reads/${ORDER}
+METADATA={{ metadata_filename }}
+
+source /data/reddylab/software/miniconda2/bin/activate cwltool
+python /home/aeb84/workspace/GGR-cwl/json-generator/run.py \
+    -m {{ metadata_filename }} \
+    -d ${PROCESSED_DATA_DIR} \
+    -o {{ root_dir }}/processing/{{ lib_type }}/jsons \
+    -t {{ lib_type }}
+    --mem {{ mem }} \
+    --nthreads {{ nthreads }} \
+{% if separate_jsons %}
+    --separate-jsons \
+{% endif %}
+{% if lib_type == 'rna_seq' %}
+    {% if star_genome %}
+    --genomeDir {{ star_genome }} \
+    {% else %}
+    --genomeDir /data/reddylab/Reference_Data/Genomes/hg38/STAR_genome_sjdbOverhang_49_novelSJDB \
+    {% endif %}
+{% endif %}
+
+mkdir -p {{ root_dir }}/processing/{{ lib_type }}/slurm_scripts
+
+{% if lib_type == 'chip_seq' %}
+EXP_TYPES=(se-narrow \
+        se-narrow-with-control \
+        pe-narrow \
+        pe-narrow-with-control \
+        se-broad \
+        se-broad-with-control \
+        pe-broad \
+        pe-broad-with-control)
+{% elif lib_type == 'rna_seq' %}
+EXP_TYPES=(pe-unstranded \
+       pe-stranded \
+       pe-revstranded \
+       pe-unstranded-with-sjdb \
+       pe-stranded-with-sjdb \
+       pe-revstranded-with-sjdb\
+       se-unstranded \
+       se-stranded \
+       se-revstranded \
+       se-unstranded-with-sjdb \
+       se-stranded-with-sjdb \
+       se-revstranded-with-sjdb)
+{% endif %}
+for EXP_TYPE in ${EXP_TYPES[*]};
+do
+{#TODO: create basename jinja2 filter#}
+    NUM_JSONS=$(ls -1 {{ root_dir }}/processing/{{ lib_type }}/jsons/{{ metadata_filename | basename }}*json \
+        | grep -P ".*${EXP_TYPE}\-?[0-9]+.json" \
+        | wc -l)
+    if [[ $NUM_JSONS -gt 0 ]];
+    then
+        bash {{ root_dir }}/processing/{{ lib_type }}/scripts/cwltool-{{ lib_type }}-slurm-array.sh \
+        ${ORDER} \
+        ${EXP_TYPE} \
+        {{ mem }} \
+        {{ nthreads }} > /data/reddylab/Alex/${PROJECT}/chip-seq/slurm_scripts/${ORDER}-${EXP_TYPE}.sh;
+        NUM_JSONS_0=$(bc <<< $NUM_JSONS-1)
+        echo sbatch -p new,all --array=0-${NUM_JSONS_0}%20 /data/reddylab/Alex/GGR/chip-seq/slurm_scripts/${ORDER}-${EXP_TYPE}.sh;
+    fi
+done
+
+

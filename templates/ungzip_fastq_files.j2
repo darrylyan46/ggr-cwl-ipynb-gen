@@ -1,0 +1,23 @@
+%%writefile {{ output_fn }}
+#!/bin/bash
+ORDER={{ project_name }}
+PROJECT_HOME={{ root_dir }}
+METADATA={{ metadata_filename }}
+RAW_DATA_DIR=${PROJECT_HOME}/data/{{ lib_type }}/raw_reads/${ORDER}
+
+if [[ ! -e ${RAW_DATA_DIR} ]];
+then
+    RAW_DATA_DIR=${PROJECT_HOME}/data/{{ lib_type }}/raw_reads/${ORDER^^}
+fi
+PROCESSED_DATA_DIR=${PROJECT_HOME}/data/{{ lib_type }}/processed_raw_reads/${ORDER}
+
+mkdir -p ${PROCESSED_DATA_DIR}
+
+sample=$(/data/reddylab/software/bin/print_tab_cols.awk -v cols="${seq_name_header}" ${METADATA} |\
+            awk -v SLURM_ARRAY_TASK_ID=${SLURM_ARRAY_TASK_ID} 'NR==SLURM_ARRAY_TASK_ID{print}');
+
+for ii in ${RAW_DATA_DIR}/${sample}_*gz;
+do
+    sample_gz_file=$(basename ${ii})
+    gzip -cd ${ii} > ${PROCESSED_DATA_DIR}/${sample_gz_file/.gz/};
+done
