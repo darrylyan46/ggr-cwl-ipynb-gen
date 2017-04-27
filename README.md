@@ -41,3 +41,4 @@ optional arguments:
 - numpy >=1.10.4
 - pandas >=0.17.1
 - xlrd >=1.0.0
+- ruamel >=0.11.11
