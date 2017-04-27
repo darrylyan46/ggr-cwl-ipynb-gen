@@ -84,19 +84,30 @@ class CellSbatch(Cell):
 
 
 def save_metadata(samples_df, conf_args, lib_type):
+    cells = []
+    cell_mkdir = Cell(contents=["%%bash",
+                                "mkdir -p %s/data/%s/metadata" % (conf_args['root_dir'], lib_type),
+                                "mkdir -p %s/data/%s/raw_reads" % (conf_args['root_dir'], lib_type),
+                                "mkdir -p %s/data/%s/processed_raw_reads" % (conf_args['root_dir'], lib_type),
+                                "mkdir -p %s/processing/%s/scripts" % (conf_args['root_dir'], lib_type),
+                                "mkdir -p %s/processing/%s/jsons" % (conf_args['root_dir'], lib_type)
+                                ],
+                      description=["# %s - %s" % (conf_args['project_name'], lib_type),
+                                   consts.notebook_blurb,
+                                   "#### Create necessary folder(s)"])
+    cells.extend(cell_mkdir.to_list())
+
+
     outfile = "%s/data/%s/metadata/%s_download_metadata.%s.txt" % (conf_args['root_dir'], lib_type, lib_type,
                                                                    conf_args['project_name'])
     contents = ["%%%%writefile %s" % outfile, samples_df.to_csv(index=False, sep=conf_args['sep'], encoding='utf-8')]
-    cell = Cell(contents=contents, description="# %s - %s" % (conf_args['project_name'], lib_type))
-
-    return cell.to_list(), outfile
+    cell = Cell(contents=contents, description="Save metadata file")
+    cells.extend(cell.to_list())
+    return cells, outfile
 
 
 def download_fastq_files(conf_args, lib_type, metadata_filename=None):
     cells = []
-    cell_mkdir = Cell(contents=["%%bash", "mkdir -p %s/processing/%s/scripts" % (conf_args['root_dir'], lib_type)],
-                      description=["#### Download FASTQ from sequencing core", "Create necessary folder(s)"])
-    cells.extend(cell_mkdir.to_list())
 
     download_fn = "%s/processing/%s/scripts/download_%s.txt" % (conf_args['root_dir'], lib_type,
                                                                 conf_args['project_name'])
@@ -109,7 +120,9 @@ def download_fastq_files(conf_args, lib_type, metadata_filename=None):
     }
     contents = [render('templates/download_fastq_files.j2', context)]
 
-    cell_write_dw_file = Cell(contents=contents, description="Create file to download FASTQ files from sequencing FTP")
+    cell_write_dw_file = Cell(contents=contents,
+                              description=["#### Download FASTQ from sequencing core",
+                                           "Create file to download FASTQ files from sequencing FTP"])
     cells.extend(cell_write_dw_file.to_list())
 
     execute_cell = CellSbatch(contents=['ssh hardac-xfer.genome.duke.edu;', 'sh %s' % download_fn],
@@ -214,6 +227,7 @@ def cwl_slurm_array_gen(conf_args, lib_type, metadata_filename, pipeline_type, n
         'metadata_basename': metadata_basename,
         'project_name': conf_args['project_name'],
         'root_dir': conf_args['root_dir'],
+        'user_duke_email': conf_args['user_duke_email'],
         'lib_type': lib_type,
         'mem': consts.mem[lib_type.lower()],
         'nthreads': consts.nthreads[lib_type.lower()],
@@ -221,7 +235,7 @@ def cwl_slurm_array_gen(conf_args, lib_type, metadata_filename, pipeline_type, n
     }
     contents = [render('templates/%s.j2' % func_name, context)]
 
-    cell_write_dw_file = Cell(contents=contents, description="#### Create SLURM array master bash file")
+    cell_write_dw_file = Cell(contents=contents, description="#### Create SLURM array master bash file for %s samples" % pipeline_type)
     cells.extend(cell_write_dw_file.to_list())
 
     execute_cell = CellSbatch(contents=[output_fn],
