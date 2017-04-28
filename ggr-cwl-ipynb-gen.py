@@ -199,6 +199,8 @@ def cwl_json_gen(conf_args, lib_type, metadata_filename):
         'root_dir': conf_args['root_dir'],
         'lib_type': lib_type,
         'star_genome': consts.star_genome,
+        'mem': consts.mem[lib_type.lower()],
+        'nthreads': consts.nthreads[lib_type.lower()],
         'separate_jsons': consts.separate_jsons
     }
     contents = [render('templates/%s.j2' % func_name, context)]

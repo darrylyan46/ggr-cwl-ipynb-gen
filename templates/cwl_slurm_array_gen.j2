@@ -10,9 +10,7 @@
 
 export PATH="/data/reddylab/software/bin:$PATH"
 export PATH="/data/reddylab/software/cwl/bin:$PATH"
-export PATH="/data/reddylab/software/FastQC:$PATH"
 export PATH="/data/reddylab/software/preseq_v2.0:$PATH"
-export PATH="/data/reddylab/software/samtools-1.3/bin/:$PATH"
 export PATH="/data/reddylab/software/rsem-1.2.21/:$PATH"
 {% if lib_type == 'chip_seq' %}export PATH="/data/reddylab/software/phantompeakqualtools/:$PATH"
 {% elif lib_type == 'rna_seq' %}export PATH="/data/reddylab/software/STAR-STAR_2.4.1a/bin/Linux_x86_64/:$PATH"
@@ -21,6 +19,8 @@ export PATH="/data/reddylab/software/bamtools-2.2.3/bin/:$PATH"{% endif %}
 
 module load bedtools2
 module load R/3.2.0-gcb01
+module load fastqc
+module load samtools
 
 # For SPP
 export R_LIBS="/data/reddylab/software/R_libs"

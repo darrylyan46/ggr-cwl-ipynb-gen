@@ -9,8 +9,8 @@ python /home/aeb84/workspace/GGR-cwl/json-generator/run.py \
     -m {{ metadata_filename }} \
     -d ${PROCESSED_DATA_DIR} \
     -o {{ root_dir }}/processing/{{ lib_type }}/jsons \
-    -t {{ lib_type }} \
-    --mem {{ mem }}\
-    --nthreads {{ nthreads }}{% if separate_jsons or lib_type == 'rna_seq' %}\{% endif %}
+    -t {{ lib_type | replace("_", "-") }} \
+    --mem {{ mem }} \
+    --nthreads {{ nthreads }}{% if separate_jsons or lib_type == 'rna_seq' %} \{% endif %}
 {% if separate_jsons %}    --separate-jsons{% if lib_type == 'rna_seq' %} \{% endif %}{% endif %}
 {% if lib_type == 'rna_seq' %}{% if star_genome %}    --genomeDir {{ star_genome }}{% else %}    --genomeDir /data/reddylab/Reference_Data/Genomes/hg38/STAR_genome_sjdbOverhang_49_novelSJDB{% endif %}{% endif %}
