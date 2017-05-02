@@ -125,7 +125,7 @@ def download_fastq_files(conf_args, lib_type, metadata_filename=None):
                                            "Create file to download FASTQ files from sequencing FTP"])
     cells.extend(cell_write_dw_file.to_list())
 
-    execute_cell = CellSbatch(contents=['ssh hardac-xfer.genome.duke.edu;', 'sh %s' % download_fn],
+    execute_cell = CellSbatch(contents=['ssh hardac-xfer.genome.duke.edu \'sh %s\'' % download_fn],
                               wrap_command='',
                               description=" Execute file to download files")
     cells.extend(execute_cell.to_list())

@@ -16,7 +16,7 @@ mkdir -p ${PROCESSED_DATA_DIR}
 sample=$(/data/reddylab/software/bin/print_tab_cols.awk -v cols="${seq_name_header}" ${METADATA} |\
             awk -v SLURM_ARRAY_TASK_ID=${SLURM_ARRAY_TASK_ID} 'NR==SLURM_ARRAY_TASK_ID{print}');
 
-for ii in ${RAW_DATA_DIR}/${sample}_*gz;
+for ii in $(find ${RAW_DATA_DIR} -type f -iname "${sample}_*gz");
 do
     sample_gz_file=$(basename ${ii})
     gzip -cd ${ii} > ${PROCESSED_DATA_DIR}/${sample_gz_file/.gz/};
