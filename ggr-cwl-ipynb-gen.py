@@ -357,7 +357,7 @@ def main():
 
     args = parser.parse_args()
 
-    conf_args = ruamel.yaml.load(args.conf_file)
+    conf_args = ruamel.yaml.load(args.conf_file, Loader=ruamel.yaml.Loader)
     if args.project_name:
         conf_args['project_name'] = args.project_name
     else:
