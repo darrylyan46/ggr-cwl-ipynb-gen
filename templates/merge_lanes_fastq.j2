@@ -31,12 +31,12 @@ sample_name=$(/data/reddylab/software/bin/print_tab_cols.awk -v cols="${name_hea
 
 for read_pair in R1 R2;
 do
-    sample_files=$(/bin/ls ${PROCESSED_DATA_DIR}/${sample_seq_name}*_${read_pair}_*)
+    sample_files=$(/bin/ls ${PROCESSED_DATA_DIR}/${sample_seq_name/ /}*_${read_pair}_*)
     if [[ $? == 0 ]];
     then
         merged=$(basename ${sample_files} | sed -e 's/_L[0-9]\{3\}_/_/')
         cat ${sample_files} > ${PROCESSED_DATA_DIR}/${merged};
-        rm -f ${sample_files}
+{#        rm -f ${sample_files}#}
 
         # Rename samples with our sample Names
         dest_filename=$(basename ${PROCESSED_DATA_DIR}/${merged} \

@@ -5,6 +5,13 @@ PROJECT_HOME={{ root_dir }}
 METADATA={{ metadata_filename }}
 RAW_DATA_DIR=${PROJECT_HOME}/data/{{ lib_type }}/raw_reads/${ORDER}
 
+seq_name_header=$(/bin/grep -Eoi "sequencing.?core.?library.?name" ${METADATA})
+if [[ $? == 1 ]];
+then
+    echo -e "ERROR: Sequencing core library name not found in ${METADATA}. Fix it"
+    exit 1
+fi
+
 if [[ ! -e ${RAW_DATA_DIR} ]];
 then
     RAW_DATA_DIR=${PROJECT_HOME}/data/{{ lib_type }}/raw_reads/${ORDER^^}
@@ -14,9 +21,9 @@ PROCESSED_DATA_DIR=${PROJECT_HOME}/data/{{ lib_type }}/processed_raw_reads/${ORD
 mkdir -p ${PROCESSED_DATA_DIR}
 
 sample=$(/data/reddylab/software/bin/print_tab_cols.awk -v cols="${seq_name_header}" ${METADATA} |\
-            awk -v SLURM_ARRAY_TASK_ID=${SLURM_ARRAY_TASK_ID} 'NR==SLURM_ARRAY_TASK_ID{print}');
+            awk -v SLURM_ARRAY_TASK_ID=${SLURM_ARRAY_TASK_ID} 'NR==SLURM_ARRAY_TASK_ID+1{print}');
 
-for ii in $(find ${RAW_DATA_DIR} -type f -iname "${sample}_*gz");
+for ii in $(/bin/find ${RAW_DATA_DIR} -type f | /bin/grep "${sample}*_*gz");
 do
     sample_gz_file=$(basename ${ii})
     gzip -cd ${ii} > ${PROCESSED_DATA_DIR}/${sample_gz_file/.gz/};
