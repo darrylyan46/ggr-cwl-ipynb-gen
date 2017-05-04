@@ -2,7 +2,6 @@
 #!/bin/bash
 #SBATCH --job-name=cwl_{{ lib_type }}
 #SBATCH --output={{ root_dir }}/processing/{{ lib_type }}/logs/{{ project_name }}-{{ pipeline_type }}-%a.out
-#SBATCH --error={{ root_dir }}/processing/{{ lib_type }}/logs/{{ project_name }}-{{ pipeline_type }}-%a.err
 {% if user_duke_email %}#SBATCH --mail-user={{ user_duke_email }}
 #SBATCH --mail-type=FAIL,END
 {% endif %}#SBATCH --mem={{ mem }}

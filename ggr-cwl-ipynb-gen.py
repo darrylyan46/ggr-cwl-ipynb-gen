@@ -45,7 +45,9 @@ class CellSbatch(Cell):
                  partition=None, wrap=True, wrap_command='sh', array=None, **kwargs):
         super(CellSbatch, self).__init__(**kwargs)
 
-        content_prolog = ['sbatch', '-o', script_output]
+        content_prolog = ['sbatch']
+        if script_output:
+            content_prolog.extend(['-o', script_output])
         if partition:
             content_prolog.extend(['-p', partition])
         if mem:
@@ -90,7 +92,8 @@ def save_metadata(samples_df, conf_args, lib_type):
                                 "mkdir -p %s/data/%s/raw_reads" % (conf_args['root_dir'], lib_type),
                                 "mkdir -p %s/data/%s/processed_raw_reads" % (conf_args['root_dir'], lib_type),
                                 "mkdir -p %s/processing/%s/scripts" % (conf_args['root_dir'], lib_type),
-                                "mkdir -p %s/processing/%s/jsons" % (conf_args['root_dir'], lib_type)
+                                "mkdir -p %s/processing/%s/jsons" % (conf_args['root_dir'], lib_type),
+                                "mkdir -p %s/processing/%s/logs" % (conf_args['root_dir'], lib_type)
                                 ],
                       description=["# %s - %s" % (conf_args['project_name'], lib_type),
                                    consts.notebook_blurb,
@@ -100,7 +103,10 @@ def save_metadata(samples_df, conf_args, lib_type):
 
     outfile = "%s/data/%s/metadata/%s_download_metadata.%s.txt" % (conf_args['root_dir'], lib_type, lib_type,
                                                                    conf_args['project_name'])
-    contents = ["%%%%writefile %s" % outfile, samples_df.to_csv(index=False, sep=conf_args['sep'], encoding='utf-8')]
+    contents = ["%%%%writefile %s" % outfile, samples_df.to_csv(index=False,
+                                                                sep=conf_args['sep'],
+                                                                encoding='utf-8',
+                                                                header=[x.capitalize() for x in samples_df.columns.values])]
     cell = Cell(contents=contents, description="Save metadata file")
     cells.extend(cell.to_list())
     return cells, outfile
@@ -149,11 +155,13 @@ def ungzip_fastq_files(conf_args, lib_type, metadata_filename=None, num_samples=
     cell_write_dw_file = Cell(contents=contents, description="#### Ungzip FASTQ files")
     cells.extend(cell_write_dw_file.to_list())
 
+    logs_dir = "%s/processing/%s/logs" % (conf_args['root_dir'], lib_type)
     execute_cell = CellSbatch(contents=[ungzip_fn],
                               description="Execute file to ungzip FASTQ files",
                               depends_on=True,
                               array="0-%d%%20" % (num_samples - 1),
-                              script_output="%s_%%A_%%a.out" % inspect.stack()[0][3])
+                              script_output="%s/%s_%s_%%a.out" % (logs_dir, conf_args['project_name'],
+                                                                  inspect.stack()[0][3]))
     cells.extend(execute_cell.to_list())
 
     return cells
@@ -175,11 +183,13 @@ def merge_fastq_files(conf_args, lib_type, metadata_filename=None, num_samples=N
     cell_write_dw_file = Cell(contents=contents, description="#### Merge lanes of FASTQ files")
     cells.extend(cell_write_dw_file.to_list())
 
+    logs_dir = "%s/processing/%s/logs" % (conf_args['root_dir'], lib_type)
     execute_cell = CellSbatch(contents=[merge_fn],
                               description="Execute file to merge lanes of FASTQ files",
                               depends_on=True,
                               array="0-%d%%20" % (num_samples-1),
-                              script_output="%s_%%A_%%a.out" % inspect.stack()[0][3])
+                              script_output="%s/%s_%s_%%a.out" % (logs_dir, conf_args['project_name'],
+                                                                  inspect.stack()[0][3]))
     cells.extend(execute_cell.to_list())
 
     return cells
@@ -208,10 +218,12 @@ def cwl_json_gen(conf_args, lib_type, metadata_filename):
     cell_write_dw_file = Cell(contents=contents, description="#### Create JSON files for CWL pipeline files")
     cells.extend(cell_write_dw_file.to_list())
 
+    logs_dir = "%s/processing/%s/logs" % (conf_args['root_dir'], lib_type)
     execute_cell = CellSbatch(contents=[output_fn],
-                              description="Execute file to ungzip FASTQ files",
+                              description="Execute file to create JSON files",
                               depends_on=True,
-                              script_output="%s_%%A.out" % inspect.stack()[0][3])
+                              script_output="%s/%s_%s_%%a.out" % (logs_dir, conf_args['project_name'],
+                                                                  inspect.stack()[0][3]))
     cells.extend(execute_cell.to_list())
     return cells
 
@@ -243,8 +255,7 @@ def cwl_slurm_array_gen(conf_args, lib_type, metadata_filename, pipeline_type, n
     execute_cell = CellSbatch(contents=[output_fn],
                               description="Execute SLURM array master file",
                               depends_on=True,
-                              array="0-%d%%20" % (n_samples - 1),
-                              script_output="%s_%%A_%%a.out" % inspect.stack()[0][3])
+                              array="0-%d%%20" % (n_samples - 1))
     cells.extend(execute_cell.to_list())
 
     return cells
@@ -283,14 +294,13 @@ def create_cells(samples_df, conf_args=None):
     """
     Master function to write all code and text for the notebook.
 
-    It has a number of components:
-        - write metadata txt file
-        - write bash file to download FASTQ.gz files from sequencing core
-        - execute previous file in HARDAC
-        - write file to uncompress FASTQ files
-        - execute previous file in HARDAC
-        - write file to rename and move FASTQ files
-        - execute cwltool master CWL generator file
+    Conceptually, there are a number of things that have to happen:
+        - save metadata txt file
+        - download FASTQ.gz files from sequencing core
+        - uncompress FASTQ.gz files
+        - rename and move FASTQ files
+        - create JSONs files for cwltool
+        - execute cwltool master file
     """
     lib_type = samples_df.iloc[0]['library type'].lower().replace('-', '_')
     num_samples=samples_df.shape[0]
