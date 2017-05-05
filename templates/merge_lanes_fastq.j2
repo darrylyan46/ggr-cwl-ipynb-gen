@@ -11,7 +11,7 @@ cd ${PROCESSED_DATA_DIR}
 seq_name_header=$(/bin/grep -Eoi "sequencing.?core.?library.?name" ${METADATA})
 if [[ $? == 1 ]];
 then
-    echo -e "ERROR: Sequencing core library name not found in ${METADATA}. Fix it"
+    echo -e "ERROR: Sequencing core library name not found in ${METADATA}"
     exit 1
 fi
 
@@ -23,16 +23,25 @@ then
 fi
 name_header=$(echo ${name_header} | cut -f2)
 
+seq_type_header=$(head -1 ${METADATA} | /bin/grep -Poi "paired.?end.?or.?single.?end")
+if [[ $? == 1 ]];
+then
+    echo -e "ERROR: Paired-end or single-end column not found in ${METADATA}"
+    exit 1
+fi
+
 sample_seq_name=$(/data/reddylab/software/bin/print_tab_cols.awk -v cols="${seq_name_header}" ${METADATA} \
     | awk -v SLURM_ARRAY_TASK_ID=${SLURM_ARRAY_TASK_ID} 'NR==SLURM_ARRAY_TASK_ID+1{print}');
 sample_name=$(/data/reddylab/software/bin/print_tab_cols.awk -v cols="${name_header}" ${METADATA} \
+    | awk -v SLURM_ARRAY_TASK_ID=${SLURM_ARRAY_TASK_ID} 'NR==SLURM_ARRAY_TASK_ID+1{print}');
+seq_type=$(/data/reddylab/software/bin/print_tab_cols.awk -v cols="${seq_type_header}" ${METADATA} \
     | awk -v SLURM_ARRAY_TASK_ID=${SLURM_ARRAY_TASK_ID} 'NR==SLURM_ARRAY_TASK_ID+1{print}');
 
 
 for read_pair in R1 R2;
 do
     sample_files=$(/bin/ls ${PROCESSED_DATA_DIR}/${sample_seq_name/ /}*_${read_pair}_*)
-    if [[ $? == 0 ]];
+    if [[ ${read_pair}=="R1" || (${seq_type}=="PE" || ${seq_type}=="pe") ]];
     then
         # Merge all lanes
         merged=$(basename ${sample_files} | sed -e 's/_L[0-9]\{3\}_/_/')
@@ -44,6 +53,11 @@ do
             | sed -r 's/\_S[0-9]+//; s/\_(R[12])\_/\.\1\./; s/\.[0-9]+\.fastq/\.fastq/')
         mv ${PROCESSED_DATA_DIR}/${merged} ${PROCESSED_DATA_DIR}/${dest_filename}
         rename ${sample_seq_name} ${sample_name} ${PROCESSED_DATA_DIR}/${dest_filename}
+
+        if [[ ${seq_type}=="SE" || ${seq_type}=="se" ]];
+        then
+            rename \.R1\. \. ${dest_filename}
+        fi
     fi
 done
 

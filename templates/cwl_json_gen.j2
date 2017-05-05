@@ -13,5 +13,5 @@ python /home/aeb84/workspace/GGR-cwl/json-generator/run.py \
     --mem {{ mem }} \
     --nthreads {{ nthreads }}{% if separate_jsons or lib_type == 'rna_seq' %} \{% endif %}
 {% if separate_jsons %}    --separate-jsons{% if lib_type == 'rna_seq' %} \{% endif %}{% endif %}
-{% if lib_type == 'rna_seq' and separate_jsons %}    --skip-star-2pass{% endif %} \
+{% if lib_type == 'rna_seq' and separate_jsons %}    --skip-star-2pass \{% endif %}
 {% if lib_type == 'rna_seq' %}{% if star_genome %}    --genomeDir {{ star_genome }}{% else %}    --genomeDir /data/reddylab/Reference_Data/Genomes/hg38/STAR_genome_sjdbOverhang_49_novelSJDB{% endif %}{% endif %}
