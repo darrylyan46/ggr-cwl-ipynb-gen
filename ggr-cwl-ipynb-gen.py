@@ -41,7 +41,7 @@ class Cell(object):
 
 
 class CellSbatch(Cell):
-    def __init__(self, script_output='/dev/null', depends_on=False, mem=None, cpus=None,
+    def __init__(self, script_output=None, depends_on=False, mem=None, cpus=None,
                  partition=None, wrap=True, wrap_command='sh', array=None, **kwargs):
         super(CellSbatch, self).__init__(**kwargs)
 
@@ -131,9 +131,12 @@ def download_fastq_files(conf_args, lib_type, metadata_filename=None):
                                            "Create file to download FASTQ files from sequencing FTP"])
     cells.extend(cell_write_dw_file.to_list())
 
+    logs_dir = "%s/processing/%s/logs" % (conf_args['root_dir'], lib_type)
     execute_cell = CellSbatch(contents=['ssh hardac-xfer.genome.duke.edu \'sh %s\'' % download_fn],
                               wrap_command='',
-                              description=" Execute file to download files")
+                              description=" Execute file to download files",
+                              script_output="%s/%s_%s.out" % (logs_dir, conf_args['project_name'],
+                                                                  inspect.stack()[0][3]))
     cells.extend(execute_cell.to_list())
 
     return cells
