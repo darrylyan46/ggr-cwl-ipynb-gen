@@ -6,7 +6,7 @@ METADATA={{ metadata_filename }}
 
 source /data/reddylab/software/miniconda2/bin/activate cwltool
 python /home/aeb84/workspace/GGR-cwl/json-generator/run.py \
-    -m {{ metadata_filename }} \
+    -m ${METADATA} \
     -d ${PROCESSED_DATA_DIR} \
     -o {{ root_dir }}/processing/{{ lib_type }}/jsons \
     -t {{ lib_type | replace("_", "-") }} \

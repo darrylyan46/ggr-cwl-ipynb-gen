@@ -291,6 +291,17 @@ def get_pipeline_types(samples_df):
                 else:
                     pipeline_type = '-'.join([seq_end, strandness])
                 yield pipeline_type, np.sum(samples_filter)
+    if lib_type == consts.library_type_atac_seq:
+        for seq_end in consts.seq_ends:
+            for with_blacklist_removal in consts.blacklist_removal:
+                samples_filter = (samples_df['paired-end or single-end'].str.lower() == seq_end)
+                if with_blacklist_removal:
+                    pipeline_type = '-'.join([seq_end, with_blacklist_removal])
+                    samples_filter = samples_filter & (~samples_df['blacklist removal'].isnull())
+                else:
+                    pipeline_type = '-'.join([seq_end])
+                    samples_filter = samples_filter & (samples_df['blacklist removal'].isnull())
+                yield pipeline_type, np.sum(samples_filter)
 
 
 def create_cells(samples_df, conf_args=None):
