@@ -4,6 +4,7 @@ import nbformat.v3 as nbf
 import sys
 import os
 import pandas as pd
+from jinja2 import FileSystemLoader
 from xlrd import XLRDError
 import ruamel.yaml
 import consts
@@ -11,11 +12,14 @@ import jinja2
 import inspect
 import numpy as np
 
+encoding = sys.getfilesystemencoding()
+EXEC_DIR = os.path.dirname(unicode(__file__, encoding)) + "/"
+
 
 def render(tpl_path, context):
     path, filename = os.path.split(tpl_path)
     return jinja2.Environment(
-        loader=jinja2.FileSystemLoader(path or './')
+        loader=FileSystemLoader(os.path.join(EXEC_DIR, "templates"))
     ).get_template(filename).render(context)
 
 
@@ -41,8 +45,8 @@ class Cell(object):
 
 
 class CellSbatch(Cell):
-    def __init__(self, script_output=None, depends_on=False, mem=None, cpus=None,
-                 partition=None, wrap=True, wrap_command='sh', array=None, **kwargs):
+    def __init__(self, script_output=None, depends_on=False, mem=None, cpus=None, partition=None, wrap=True,
+                 wrap_command='sh', array=None, prolog=[], **kwargs):
         super(CellSbatch, self).__init__(**kwargs)
 
         content_prolog = ['sbatch']
@@ -63,7 +67,7 @@ class CellSbatch(Cell):
             content_prolog.append('--wrap="%s' % wrap_command)
             self.contents.append('"')
         self.contents = content_prolog + self.contents
-        self.contents = [' '.join(self.contents)]
+        self.contents = prolog + [' '.join(self.contents)]
 
         self.header = ["%%script"]
         self.header.append('--out blocking_job_str')
@@ -162,6 +166,7 @@ def ungzip_fastq_files(conf_args, lib_type, metadata_filename=None, num_samples=
     execute_cell = CellSbatch(contents=[ungzip_fn],
                               description="Execute file to ungzip FASTQ files",
                               depends_on=True,
+                              partition="new,all",
                               array="0-%d%%20" % (num_samples - 1),
                               script_output="%s/%s_%s_%%a.out" % (logs_dir, conf_args['project_name'],
                                                                   inspect.stack()[0][3]))
@@ -191,8 +196,9 @@ def merge_fastq_files(conf_args, lib_type, metadata_filename=None, num_samples=N
                               description="Execute file to merge lanes of FASTQ files",
                               depends_on=True,
                               array="0-%d%%20" % (num_samples-1),
+                              partition="new,all",
                               script_output="%s/%s_%s_%%a.out" % (logs_dir, conf_args['project_name'],
-                                                                  inspect.stack()[0][3]))
+                                                                  inspect.stack()[0][3]),)
     cells.extend(execute_cell.to_list())
 
     return cells
@@ -258,7 +264,9 @@ def cwl_slurm_array_gen(conf_args, lib_type, metadata_filename, pipeline_type, n
     execute_cell = CellSbatch(contents=[output_fn],
                               description="Execute SLURM array master file",
                               depends_on=True,
-                              array="0-%d%%20" % (n_samples - 1))
+                              array="0-%d%%20" % (n_samples - 1),
+                              prolog=["source activate cwltool"],
+                              partition="new,all")
     cells.extend(execute_cell.to_list())
 
     return cells

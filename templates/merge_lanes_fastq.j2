@@ -41,7 +41,7 @@ seq_type=$(/data/reddylab/software/bin/print_tab_cols.awk -v cols="${seq_type_he
 for read_pair in R1 R2;
 do
     sample_files=$(/bin/ls ${PROCESSED_DATA_DIR}/${sample_seq_name/ /}*_${read_pair}_*)
-    if [[ ${read_pair} == "R1" || (${seq_type} == "PE" || ${seq_type} ==" pe") ]];
+    if [[ ${read_pair} == "R1" || (${seq_type/ /} == "PE" || ${seq_type/ /} == "pe") ]];
     then
         # Merge all lanes
         merged=$(basename ${sample_files} | sed -e 's/_L[0-9]\{3\}_/_/')
@@ -54,7 +54,7 @@ do
         mv ${PROCESSED_DATA_DIR}/${merged} ${PROCESSED_DATA_DIR}/${dest_filename}
         rename ${sample_seq_name} ${sample_name} ${PROCESSED_DATA_DIR}/${dest_filename}
 
-        if [[ ${seq_type} == "SE" || ${seq_type} == "se" ]];
+        if [[ ${seq_type/ /} == "SE" || ${seq_type/ /} == "se" ]];
         then
             rename \.R1\. \. ${dest_filename}
         fi
