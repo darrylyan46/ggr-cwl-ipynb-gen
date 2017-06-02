@@ -5,7 +5,7 @@ PROCESSED_DATA_DIR={{ root_dir }}/data/{{ lib_type }}/processed_raw_reads/${ORDE
 METADATA={{ metadata_filename }}
 
 source /data/reddylab/software/miniconda2/bin/activate cwltool
-python /home/aeb84/workspace/GGR-cwl/json-generator/run.py \
+python /data/reddylab/software/cwl/GGR-cwl/json-generator/run.py \
     -m ${METADATA} \
     -d ${PROCESSED_DATA_DIR} \
     -o {{ root_dir }}/processing/{{ lib_type }}/jsons \

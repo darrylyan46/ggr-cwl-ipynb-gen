@@ -36,5 +36,5 @@ cwltool --debug \
     --tmp-outdir-prefix {{ root_dir }}/processing/{{ lib_type }}/tmpdirs/tmp-{{ project_name }}-{{ pipeline_type }}-${SLURM_ARRAY_TASK_ID}- \
     --outdir {{ root_dir }}/processing/{{ lib_type }}/{{ project_name }}-{{ pipeline_type }}  \
     --no-container \
-    /home/aeb84/workspace/GGR-cwl/{% if lib_type == 'chip_seq' %}ChIP-seq{% elif lib_type=='rna_seq' %}RNA-seq{% elif lib_type=='atac_seq' %}ATAC-seq{% endif %}_pipeline/pipeline-{{ pipeline_type }}.cwl \
+    /data/reddylab/software/cwl/GGR-cwl/{% if lib_type == 'chip_seq' %}ChIP-seq{% elif lib_type=='rna_seq' %}RNA-seq{% elif lib_type=='atac_seq' %}ATAC-seq{% endif %}_pipeline/pipeline-{{ pipeline_type }}.cwl \
     {{ root_dir }}/processing/{{ lib_type }}/jsons/{{ metadata_basename }}-{{ pipeline_type }}-${SLURM_ARRAY_TASK_ID}.json
