@@ -366,7 +366,7 @@ def get_samples_by_libray_type(metadata_file, sep='\t'):
     try:
         md = pd.read_excel(metadata_file)
     except XLRDError:
-        md = pd.read_csv(metadata_file, sep=sep)
+        md = pd.read_csv(metadata_file.name, sep=sep)
 
     md.columns = [x.lower() for x in md.columns]
     named_cols = [c for c in md.columns if not c.startswith('unnamed: ')]
