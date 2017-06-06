@@ -40,24 +40,25 @@ seq_type=$(/data/reddylab/software/bin/print_tab_cols.awk -v cols="${seq_type_he
 
 for read_pair in R1 R2;
 do
-    sample_files=$(/bin/ls ${PROCESSED_DATA_DIR}/${sample_seq_name/ /}*_${read_pair}_*)
+    sample_files=$(/bin/ls ${sample_seq_name/ /}*_${read_pair}_*)
     if [[ ${read_pair} == "R1" || (${seq_type/ /} == "PE" || ${seq_type/ /} == "pe") ]];
     then
         # Merge all lanes
         merged=$(basename ${sample_files} | sed -e 's/_L[0-9]\{3\}_/_/')
-        cat ${sample_files} > ${PROCESSED_DATA_DIR}/${merged};
+        cat ${sample_files} > ${merged};
         rm -f ${sample_files}
 
         # Rename samples with our sample Names
-        dest_filename=$(basename ${PROCESSED_DATA_DIR}/${merged} \
-            | sed -r 's/\_S[0-9]+//; s/\_(R[12])\_/\.\1\./; s/\.[0-9]+\.fastq/\.fastq/')
-        mv ${PROCESSED_DATA_DIR}/${merged} ${PROCESSED_DATA_DIR}/${dest_filename}
-        rename ${sample_seq_name} ${sample_name} ${PROCESSED_DATA_DIR}/${dest_filename}
+        dest_filename=$(basename ${merged} | sed -r 's/\_S[0-9]+//; s/\_(R[12])\_/\.\1\./; s/\.[0-9]+\.fastq/\.fastq/')
+        mv ${merged} ${dest_filename}
 
         if [[ ${seq_type/ /} == "SE" || ${seq_type/ /} == "se" ]];
         then
             rename \.R1\. \. ${dest_filename}
         fi
+
+        rename ${sample_seq_name} ${sample_name} ${dest_filename}
+
     fi
 done
 
