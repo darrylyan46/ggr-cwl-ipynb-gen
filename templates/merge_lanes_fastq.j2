@@ -54,7 +54,7 @@ do
 
         if [[ ${seq_type/ /} == "SE" || ${seq_type/ /} == "se" ]];
         then
-            rename \.R1\. \. ${dest_filename}
+            dest_filename=${dest_filename/.R1/}
         fi
 
         rename ${sample_seq_name} ${sample_name} ${dest_filename}

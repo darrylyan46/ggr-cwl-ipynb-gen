@@ -26,5 +26,8 @@ sample=$(/data/reddylab/software/bin/print_tab_cols.awk -v cols="${seq_name_head
 for ii in $(/bin/find ${RAW_DATA_DIR} -type f | /bin/grep "${sample/ /}_.*.gz");
 do
     sample_gz_file=$(basename ${ii})
-    gzip -cd ${ii} > ${PROCESSED_DATA_DIR}/${sample_gz_file/.gz/};
+    if [[ ! -e ${PROCESSED_DATA_DIR}/${sample_gz_file/.gz/} ]];
+    then
+        gzip -cd ${ii} > ${PROCESSED_DATA_DIR}/${sample_gz_file/.gz/};
+    fi
 done
