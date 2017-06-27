@@ -52,12 +52,12 @@ do
         dest_filename=$(basename ${merged} | sed -r 's/\_S[0-9]+//; s/\_(R[12])\_/\.\1\./; s/\.[0-9]+\.fastq/\.fastq/')
         mv ${merged} ${dest_filename}
 
-        rename ${sample_seq_name} ${sample_name} ${dest_filename}
+        cleaned_dest_filename=${dest_filename/${sample_seq_name}/${sample_name}}
 
         if [[ ${seq_type/ /} == "SE" || ${seq_type/ /} == "se" ]];
         then
-            dest_filename_no_mate=${dest_filename/.R1/}
-            mv ${dest_filename} ${dest_filename_no_mate}
+            cleaned_dest_filename=${cleaned_dest_filename/.R1/}
+            mv ${dest_filename} ${cleaned_dest_filename}
         fi
     fi
 done
