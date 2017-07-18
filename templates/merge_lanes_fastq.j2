@@ -44,7 +44,7 @@ do
     if [[ ${read_pair} == "R1" || (${seq_type/ /} == "PE" || ${seq_type/ /} == "pe") ]];
     then
         # Merge all lanes
-        merged=$(basename ${sample_files} | sed -e 's/_L[0-9]\{3\}_/_/')
+        merged=$(echo ${sample_files} | awk '{print $1}' | sed -e 's/_L[0-9]\{3\}_/_/')
         cat ${sample_files} > ${merged};
         rm -f ${sample_files}
 
@@ -57,8 +57,9 @@ do
         if [[ ${seq_type/ /} == "SE" || ${seq_type/ /} == "se" ]];
         then
             cleaned_dest_filename=${cleaned_dest_filename/.R1/}
-            mv ${dest_filename} ${cleaned_dest_filename}
         fi
+        
+        mv ${dest_filename} ${cleaned_dest_filename}
     fi
 done
 
