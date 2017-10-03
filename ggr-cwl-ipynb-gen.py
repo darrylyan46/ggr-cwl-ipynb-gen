@@ -356,6 +356,63 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type):
     return cells
 
 
+def generate_qc_cell(conf_args, lib_type, pipeline_type):
+    cells = []
+
+    # Python program has no 'se' or 'pe' abbreviation
+    end_type = pipeline_type.split("-")[0]
+    if end_type == "se":
+        end_type = "single_end"
+    elif end_type == "pe":
+        end_type = "paired_end"
+
+    # Command for generating QC's
+    qc_command = """cd %s/processing/%s/%s-%s \'python /data/reddylab/software/cwl/bin/generate_stats_%s_%s.py ./ \
+    -samples `/bin/ls -1 *PBC.txt | sed 's@.PBC.txt@@'` \
+    > qc.txt""" % (conf_args['root_dir'], lib_type, conf_args["project_name"], pipeline_type,
+                   lib_type.replace("_", ""), end_type)
+
+    logs_dir = "%s/processing/%s/logs" % (conf_args['root_dir'], lib_type)
+    execute_cell = CellSbatch(contents=[qc_command],
+                              wrap_command='',
+                              description="#### Generate QCs for %s %s" % (lib_type, pipeline_type),
+                              script_output="%s/%s-%s_generate_qc.out" % (logs_dir, conf_args['project_name'],
+                                                                          pipeline_type))
+    cells.extend(execute_cell.to_list())
+
+    return cells
+
+
+def generate_plots(conf_args, metadata_file, lib_type, pipeline_type):
+    """
+    Generates cell for creating fingerprint data
+    :param conf_args: Dictionary containing data about directories, project name, etc.
+    :param metadata_file: File path to metadata
+    :param lib_type: Type of assay (RNA, ChIP, ATAC)
+    :param pipeline_type: Type of sequencing pipeline (end, control)
+    :return:
+    """
+    cells = []
+    # Current iteration of web-application only
+    if lib_type != "chip_seq":
+        return
+    plot_dir = "/data/reddylab/Darryl/GGR/analysis/fingerprint_and_spp"
+
+    # Sbatch command for fingerprint plot and QCs
+    plot_command = """/data/reddylab/Darryl/GitHub/reddylab/countFactors_metadata.sh %s \
+    %s/processing/%s/%s-%s %s/%s-%s""" % (metadata_file, conf_args['root_dir'], lib_type, conf_args['project_name'],
+                                          pipeline_type, plot_dir, conf_args['project_name'], pipeline_type)
+
+    logs_dir = "/data/reddylab/Darryl/logs"
+    execute_cell = CellSbatch(contents=[plot_command],
+                              wrap_command='',
+                              description="#### Generate fingerprint plots for %s-%s" % (conf_args['project_name'],
+                                                                                         pipeline_type))
+    cells.extend(execute_cell.to_list())
+
+    return cells
+
+
 def get_pipeline_types(samples_df):
     lib_type = samples_df['library type'].iloc[0].lower().replace('-', '_')
     if lib_type == consts.library_type_chip_seq:
