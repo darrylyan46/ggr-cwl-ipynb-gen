@@ -366,14 +366,14 @@ def generate_qc_cell(conf_args, lib_type, pipeline_type):
     elif end_type == "pe":
         end_type = "paired_end"
 
-    # Command for generating QC's
-    qc_command = """cd %s/processing/%s/%s-%s \'python /data/reddylab/software/cwl/bin/generate_stats_%s_%s.py ./ \
-    -samples `/bin/ls -1 *PBC.txt | sed 's@.PBC.txt@@'` \
-    > qc.txt""" % (conf_args['root_dir'], lib_type, conf_args["project_name"], pipeline_type,
-                   lib_type.replace("_", ""), end_type)
-
     logs_dir = "%s/processing/%s/logs" % (conf_args['root_dir'], lib_type)
-    execute_cell = CellSbatch(contents=[qc_command],
+    execute_cell = CellSbatch(contents=["cd %s/processing/%s/%s-%s" % (conf_args['root_dir'],
+                                                                       lib_type, conf_args['project_name'],
+                                                                       pipeline_type),
+                                        "python %s/generate_stats_%s_%s.py" % (consts.qc_script_dir,
+                                                                               lib_type.replace("_", ""),
+                                                                               end_type),
+                                        "-samples", "`/bin/ls -1 *PBC.txt | sed 's@.PBC.txt@@'` > qc.txt"],
                               wrap_command='',
                               description="#### Generate QCs for %s %s" % (lib_type, pipeline_type),
                               script_output="%s/%s-%s_generate_qc.out" % (logs_dir, conf_args['project_name'],
@@ -396,16 +396,20 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type):
     # Current iteration of web-application only
     if lib_type != "chip_seq":
         return
-    plot_dir = "/data/reddylab/Darryl/GGR/analysis/fingerprint_and_spp"
 
-    # Sbatch command for fingerprint plot and QCs
-    plot_command = """/data/reddylab/Darryl/GitHub/reddylab/countFactors_metadata.sh %s \
-    %s/processing/%s/%s-%s %s/%s-%s""" % (metadata_file, conf_args['root_dir'], lib_type, conf_args['project_name'],
-                                          pipeline_type, plot_dir, conf_args['project_name'], pipeline_type)
-
-    logs_dir = "/data/reddylab/Darryl/logs"
-    execute_cell = CellSbatch(contents=[plot_command],
-                              wrap_command='',
+    execute_cell = CellSbatch(contents=["%s" % consts.plot_script,
+                                        "%s" % metadata_file,
+                                        "%s/processing/%s/%s-%s" % (conf_args['root_dir'],
+                                                                    lib_type,
+                                                                    conf_args['project_name'],
+                                                                    pipeline_type),
+                                        "%s/fingerprint_and_spp/%s-%s" % (conf_args['root_dir'],
+                                                                          conf_args['project_name'],
+                                                                          pipeline_type)],
+                              wrap_command='mkdir -p %s/fingerprint_and_spp/%s-%s %s/fingerprint_and_spp/logs' %
+                                           (conf_args['root_dir'], conf_args['project_name'],
+                                            pipeline_type, conf_args['root_dir']),
+                              script_output="%s/fingerprint_and_spp/logs" % conf_args['root_dir'],
                               description="#### Generate fingerprint plots for %s-%s" % (conf_args['project_name'],
                                                                                          pipeline_type))
     cells.extend(execute_cell.to_list())
