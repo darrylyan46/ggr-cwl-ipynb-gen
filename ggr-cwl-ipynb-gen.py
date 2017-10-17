@@ -419,6 +419,9 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type):
     return cells
 
 
+def commit_qc_to_db()
+
+
 def get_pipeline_types(samples_df):
     lib_type = samples_df['library type'].iloc[0].lower().replace('-', '_')
     if lib_type == consts.library_type_chip_seq:
