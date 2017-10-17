@@ -310,9 +310,9 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type):
     :return:
     """
     cells = []
-    # Current iteration of web-application only
+    # Current iteration of web-application only accepts ChIP samples
     if lib_type != "chip_seq":
-        return
+        return []
 
     execute_cell = CellSbatch(contents=["%s" % consts.plot_script,
                                         "%s" % metadata_file,
@@ -333,6 +333,9 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type):
     cells.extend(execute_cell.to_list())
 
     return cells
+
+
+def commit_qc_to_db()
 
 
 def get_pipeline_types(samples_df):
