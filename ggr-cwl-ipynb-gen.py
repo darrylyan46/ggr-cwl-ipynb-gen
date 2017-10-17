@@ -290,6 +290,7 @@ def generate_qc_cell(conf_args, lib_type, pipeline_type):
                                                                                lib_type.replace("_", ""),
                                                                                end_type),
                                         "-samples", "`/bin/ls -1 *PBC.txt | sed 's@.PBC.txt@@'` > qc.txt"],
+                              depends_on=True,
                               wrap_command='',
                               description="#### Generate QCs for %s %s" % (lib_type, pipeline_type),
                               script_output="%s/%s-%s_generate_qc.out" % (logs_dir, conf_args['project_name'],
@@ -322,6 +323,7 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type):
                                         "%s/fingerprint_and_spp/%s-%s" % (conf_args['root_dir'],
                                                                           conf_args['project_name'],
                                                                           pipeline_type)],
+                              depends_on=True,
                               wrap_command='mkdir -p %s/fingerprint_and_spp/%s-%s %s/fingerprint_and_spp/logs' %
                                            (conf_args['root_dir'], conf_args['project_name'],
                                             pipeline_type, conf_args['root_dir']),
