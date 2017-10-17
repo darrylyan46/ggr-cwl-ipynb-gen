@@ -394,9 +394,9 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type):
     :return:
     """
     cells = []
-    # Current iteration of web-application only
+    # Current iteration of web-application only accepts ChIP samples
     if lib_type != "chip_seq":
-        return
+        return []
 
     execute_cell = CellSbatch(contents=["%s" % consts.plot_script,
                                         "%s" % metadata_file,
@@ -500,7 +500,7 @@ def create_cells(samples_df, conf_args=None):
             cells.extend(cwl_slurm_array_gen(conf_args, lib_type, metadata_filename=metadata_file,
                                              pipeline_type=pipeline_type, n_samples=n))
             cells.extend(generate_qc_cell(conf_args, lib_type, pipeline_type=pipeline_type))
-            cells.extend(generate_plots(conf_args, metadata_file=metadata_file,
+	    cells.extend(generate_plots(conf_args, metadata_file=metadata_file,
                                         lib_type=lib_type, pipeline_type=pipeline_type))
     return cells
 
