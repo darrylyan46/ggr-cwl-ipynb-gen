@@ -17,5 +17,6 @@ notebook_blurb = "This notebook will create all the necessary files, scripts and
                  "As an end user, in order to pre-process your samples provided in the spread sheet, " \
                  "you will simply need to *run the entire notebook* (Cell > Run all) and the system should take care " \
                  "of the rest for you."
+venv_path='/data/reddylab/software/miniconda2/bin/activate'
 plot_script = '/data/reddylab/Darryl/GitHub/reddylab/countFactors_metadata.sh'
 qc_script_dir = '/data/reddylab/software/cwl/bin'

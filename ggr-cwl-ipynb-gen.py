@@ -282,19 +282,15 @@ def generate_qc_cell(conf_args, lib_type, pipeline_type):
     elif end_type == "pe":
         end_type = "paired_end"
 
-    logs_dir = "%s/processing/%s/logs" % (conf_args['root_dir'], lib_type)
-    execute_cell = CellSbatch(contents=["cd %s/processing/%s/%s-%s" % (conf_args['root_dir'],
-                                                                       lib_type, conf_args['project_name'],
-                                                                       pipeline_type),
-                                        "python %s/generate_stats_%s_%s.py" % (consts.qc_script_dir,
-                                                                               lib_type.replace("_", ""),
-                                                                               end_type),
-                                        "-samples", "`/bin/ls -1 *PBC.txt | sed 's@.PBC.txt@@'` > qc.txt"],
-                              depends_on=True,
-                              wrap_command='',
-                              description="#### Generate QCs for %s %s" % (lib_type, pipeline_type),
-                              script_output="%s/%s-%s_generate_qc.out" % (logs_dir, conf_args['project_name'],
-                                                                          pipeline_type))
+    execute_cell = Cell(contents=["%%bash",
+                                  "source %s alex" % consts.venv_path,
+                                  "cd %s/processing/%s/%s-%s" % (conf_args['root_dir'],
+                                                                 lib_type, conf_args['project_name'],
+                                                                 pipeline_type),
+                                  "python %s/generate_stats_%s_%s.py ./ -samples `/bin/ls -1 *PBC* | cut -d. -f1-6` > qc.txt"
+                                  % (consts.qc_script_dir, lib_type.replace("_", ""), end_type)],
+                        description="### Generate QCs for %s %s" % (lib_type, pipeline_type)
+                        )
     cells.extend(execute_cell.to_list())
 
     return cells
@@ -324,12 +320,13 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type):
                                                                           conf_args['project_name'],
                                                                           pipeline_type)],
                               depends_on=True,
-                              wrap_command='mkdir -p %s/fingerprint_and_spp/%s-%s %s/fingerprint_and_spp/logs' %
+                              prolog=['mkdir -p %s/fingerprint_and_spp/%s-%s %s/fingerprint_and_spp/logs' %
                                            (conf_args['root_dir'], conf_args['project_name'],
-                                            pipeline_type, conf_args['root_dir']),
+                                            pipeline_type, conf_args['root_dir'])],
                               script_output="%s/fingerprint_and_spp/logs" % conf_args['root_dir'],
                               description="#### Generate fingerprint plots for %s-%s" % (conf_args['project_name'],
-                                                                                         pipeline_type))
+                                                                                         pipeline_type),
+                              partition="new,all")
     cells.extend(execute_cell.to_list())
 
     return cells
