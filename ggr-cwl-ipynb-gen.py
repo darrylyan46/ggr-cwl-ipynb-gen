@@ -51,17 +51,17 @@ class CellSbatch(Cell):
 
         content_prolog = ['sbatch']
         if script_output:
-            content_prolog.extend(['-o', script_output])
+            content_prolog.extend(['-o', script_output, '\\\n'])
         if partition:
-            content_prolog.extend(['-p', partition])
+            content_prolog.extend(['-p', partition, '\\\n'])
         if mem:
-            content_prolog.extend(['--mem', str(mem)])
+            content_prolog.extend(['--mem', str(mem), '\\\n'])
         if cpus:
-            content_prolog.extend(['-c', str(cpus)])
+            content_prolog.extend(['-c', str(cpus), '\\\n'])
         if depends_on:
-            content_prolog.extend(['--depend', 'afterok:$1'])
+            content_prolog.extend(['--depend', 'afterok:$1', '\\\n'])
         if array is not None:
-            content_prolog.extend(['--array', array])
+            content_prolog.extend(['--array', array, '\\\n'])
             wrap = False
         if wrap:
             content_prolog.append('--wrap="%s' % wrap_command)
@@ -324,7 +324,8 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type):
                                                                           conf_args['project_name'],
                                                                           pipeline_type)],
                               depends_on=True,
-                              wrap_command='mkdir -p %s/fingerprint_and_spp/%s-%s %s/fingerprint_and_spp/logs' %
+                              wrap_command='mkdir -p %s/fingerprint_and_spp/%s-%s;\\\n'
+                                           '\t%s/fingerprint_and_spp/logs' %
                                            (conf_args['root_dir'], conf_args['project_name'],
                                             pipeline_type, conf_args['root_dir']),
                               script_output="%s/fingerprint_and_spp/logs" % conf_args['root_dir'],
@@ -403,7 +404,7 @@ def create_cells(samples_df, conf_args=None):
             cells.extend(cwl_slurm_array_gen(conf_args, lib_type, metadata_filename=metadata_file,
                                              pipeline_type=pipeline_type, n_samples=n))
             cells.extend(generate_qc_cell(conf_args, lib_type, pipeline_type=pipeline_type))
-	    cells.extend(generate_plots(conf_args, metadata_file=metadata_file,
+            cells.extend(generate_plots(conf_args, metadata_file=metadata_file,
                                         lib_type=lib_type, pipeline_type=pipeline_type))
     return cells
 
