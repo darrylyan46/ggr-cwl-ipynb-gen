@@ -1,11 +1,13 @@
 # ipynb Generator configuration
-DATA_SOURCES_SFTP = 'sftp'
-DATA_SOURCES_MISEQ = 'miseq'
-DATA_SOURCES_OTHER = 'other'
+DATA_SOURCES_SFTP   = 'sftp'
+DATA_SOURCES_MISEQ  = 'miseq'
+DATA_SOURCES_DUKEDS = 'dukeds'
+DATA_SOURCES_OTHER  = 'other'
 data_sources = [
     DATA_SOURCES_SFTP,
     DATA_SOURCES_MISEQ,
-    DATA_SOURCES_OTHER
+    DATA_SOURCES_OTHER,
+    DATA_SOURCES_DUKEDS
 ]
 library_type_chip_seq = 'chip_seq'
 library_type_rna_seq = 'rna_seq'

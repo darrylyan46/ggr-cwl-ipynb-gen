@@ -35,4 +35,7 @@ done
 
 # Unmount BaseMount
 basemount --unmount ${BASEMOUNT_TMP}
+{% elif data_source == consts.DATA_SOURCES_DUKEDS %}
+module load ddsclient
+ddsclient download -p {{ project_name }} ${DATA_HOME}/raw_reads/{{ project_name }}
 {% endif %}
