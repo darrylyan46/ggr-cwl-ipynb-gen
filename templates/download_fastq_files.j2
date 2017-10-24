@@ -3,7 +3,36 @@
 METADATA={{ metadata_filename }}
 DATA_HOME={{ root_dir }}/data/{{ lib_type }}
 mkdir -p ${DATA_HOME}/raw_reads/
+ssh {{user}}@Hardac-xfer.genome.duke.edu
+{% if data_source == consts.DATA_SOURCES_SFTP %}
 read CORE_USER CORE_PROJECT CORE_PASS <<< $(cut -f 1,2,3 $METADATA | tail -n+2 | sort -u)
 cd ${DATA_HOME}/raw_reads/
 lftp -u ${CORE_USER},${CORE_PASS} -e "mirror --only-missing ${CORE_USER}/${CORE_PROJECT}; exit" "sftp://${CORE_USER}@dnaseq2.igsp.duke.edu"
 exit
+{%  elif data_source == consts.DATA_SOURCES_MISEQ  %}
+SEQ_PROJECT={{ project_name }}
+BASEMOUNT_TMP=${DATA_HOME}/raw_reads/${SEQ_PROJECT}/bm_tmp
+
+# Mount BaseMount
+basemount --config Mitchell.MiSeq ${BASEMOUNT_TMP}
+
+# Metadata
+rsync -rvz \
+    --copy-links \
+    -e ssh \
+    --update ${BASEMOUNT_TMP}/Runs/${EXPERIMENT}/.json \
+             ${DATA_HOME}/raw_reads/${SEQ_PROJECT}/
+
+
+cut -f 1,2 $METADATA | tail -n+2 | sort -u |  while read EXPERIMENT LIB_NAME;
+do
+    rsync -rvz \
+        --copy-links \
+        -e ssh \
+        --update ${BASEMOUNT_TMP}/Projects/${EXPERIMENT}/Samples/${LIB_NAME//-/_}/Files/* \
+                 ${DATA_HOME}/raw_reads/${SEQ_PROJECT}/
+done
+
+# Unmount BaseMount
+basemount --unmount ${BASEMOUNT_TMP}
+{% endif %}
