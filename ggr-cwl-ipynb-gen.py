@@ -13,7 +13,7 @@ import inspect
 import numpy as np
 
 encoding = sys.getfilesystemencoding()
-EXEC_DIR = os.path.dirname(unicode(__file__, encoding)) + "/"
+EXEC_DIR = os.path.dirname(unicode(__file__, encoding))
 
 
 def render(tpl_path, context):
