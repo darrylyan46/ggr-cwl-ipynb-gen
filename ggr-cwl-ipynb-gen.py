@@ -127,6 +127,7 @@ def download_fastq_files(conf_args, lib_type, metadata_fn=None):
         'project_name': conf_args['project_name'],
         'metadata_filename': metadata_fn,
         'root_dir': conf_args['root_dir'],
+        'user': conf_args['user'],
         'lib_type': lib_type,
         'data_source': conf_args['data_from'],
         'consts': consts
