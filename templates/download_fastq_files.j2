@@ -3,7 +3,6 @@
 METADATA={{ metadata_filename }}
 DATA_HOME={{ root_dir }}/data/{{ lib_type }}
 mkdir -p ${DATA_HOME}/raw_reads/
-ssh {{user}}@Hardac-xfer.genome.duke.edu
 {% if data_source == consts.DATA_SOURCES_SFTP %}
 read CORE_USER CORE_PROJECT CORE_PASS <<< $(cut -f 1,2,3 $METADATA | tail -n+2 | sort -u)
 cd ${DATA_HOME}/raw_reads/

@@ -140,7 +140,12 @@ def download_fastq_files(conf_args, lib_type, metadata_fn=None):
     cells.extend(cell_write_dw_file.to_list())
 
     logs_dir = "%s/processing/%s/logs" % (conf_args['root_dir'], lib_type)
-    execute_cell = CellSbatch(contents=[download_fn],
+    execute_cell = CellSbatch(contents=[],
+                              wrap_command="ssh %s@%s 'sh %s'" % (conf_args['user'],
+                                                                  consts.HOST_FOR_TUNNELED_DOWNLOAD,
+                                                                  download_fn),
+                              wrap=True,
+                              prolog=[],
                               description="Execute file to download files",
                               script_output="%s/%s_%s.out" % (logs_dir, conf_args['project_name'],
                                                                   inspect.stack()[0][3]))
