@@ -46,8 +46,8 @@ class Cell(object):
 
 class CellSbatch(Cell):
     def __init__(self, script_output=None, depends_on=False, mem=None,
-                 cpus=None, partition=None, wrap=False, wrap_command='sh',
-                 array=None, prolog=list(), **kwargs):
+                 cpus=None, partition=None, wrap_command=None, array=None,
+                 prolog=list(), **kwargs):
         super(CellSbatch, self).__init__(**kwargs)
 
         content_prolog = ['sbatch']
@@ -63,8 +63,7 @@ class CellSbatch(Cell):
             content_prolog.extend(['--depend', 'afterok:$1', '\\\n'])
         if array is not None:
             content_prolog.extend(['--array', array, '\\\n'])
-            wrap = False
-        if wrap:
+        if wrap_command:
             content_prolog.append('--wrap="%s' % wrap_command)
             self.contents.append('"')
         self.contents = content_prolog + self.contents
@@ -106,14 +105,28 @@ def save_metadata(samples_df, conf_args, lib_type):
     cells.extend(cell_mkdir.to_list())
 
 
-    outfile = "%s/data/%s/metadata/%s_download_metadata.%s.txt" % (conf_args['root_dir'], lib_type, lib_type,
-                                                                   conf_args['project_name'])
-    contents = ["%%%%writefile %s" % outfile, samples_df.to_csv(index=False,
-                                                                sep=conf_args['sep'],
-                                                                encoding='utf-8',
-                                                                header=[x.capitalize() for x in samples_df.columns.values])]
+    outfile = "%s/data/%s/metadata/%s_download_metadata.%s.txt" % \
+              (conf_args['root_dir'], lib_type, lib_type,
+               conf_args['project_name'])
+    contents = ["%%%%writefile %s" %
+                outfile, samples_df.to_csv(index=False,
+                                           sep=conf_args['sep'],
+                                           encoding='utf-8',
+                                           header=[x.capitalize() for x in samples_df.columns.values])]
     cell = Cell(contents=contents, description="Save metadata file")
     cells.extend(cell.to_list())
+
+    if 'secondary_root_dir' in conf_args:
+        contents = [
+            "%%bash",
+            "cp %s %s/data/%s/metadata/" % (outfile,
+                                            conf_args['secondary_root_dir'],
+                                            lib_type)
+        ]
+        cell = Cell(contents=contents,
+                    description="Copy metadata file to secondary destination")
+        cells.extend(cell.to_list())
+
     return cells, outfile
 
 
@@ -140,12 +153,10 @@ def download_fastq_files(conf_args, lib_type, metadata_fn=None):
     cells.extend(cell_write_dw_file.to_list())
 
     logs_dir = "%s/processing/%s/logs" % (conf_args['root_dir'], lib_type)
-    execute_cell = CellSbatch(contents=[],
+    execute_cell = CellSbatch(contents=list(),
                               wrap_command="ssh %s@%s 'sh %s'" % (conf_args['user'],
                                                                   consts.HOST_FOR_TUNNELED_DOWNLOAD,
                                                                   download_fn),
-                              wrap=True,
-                              prolog=[],
                               description="Execute file to download files",
                               script_output="%s/%s_%s.out" % (logs_dir, conf_args['project_name'],
                                                                   inspect.stack()[0][3]))
@@ -273,7 +284,7 @@ def cwl_slurm_array_gen(conf_args, lib_type, metadata_filename, pipeline_type, n
                               description="Execute SLURM array master file",
                               depends_on=True,
                               array="0-%d%%20" % (n_samples - 1),
-                              prolog=["source activate cwltool"],
+                              prolog=["source %s cwltool" % consts.conda_activate],
                               partition="new,all")
     cells.extend(execute_cell.to_list())
 
@@ -293,7 +304,7 @@ def generate_qc_cell(conf_args, lib_type, pipeline_type):
     execute_cell = CellSbatch(
         prolog=["source %s alex" % consts.conda_activate],
         contents=list(),
-        wrap_command=" \\\n\t".join([
+        wrap_command=" \\\n ".join([
             "cd %s/processing/%s/%s-%s;" % (conf_args['root_dir'],
                                          lib_type,
                                          conf_args['project_name'],
@@ -321,7 +332,7 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type):
     if lib_type != "chip_seq":
         return []
 
-    execute_cell = CellSbatch(contents=["%s" % consts.plot_script,
+    execute_cell = CellSbatch(contents=[' \\\n '.join(["%s" % consts.plot_script,
                                         "%s" % metadata_file,
                                         "%s/processing/%s/%s-%s" % (conf_args['root_dir'],
                                                                     lib_type,
@@ -329,10 +340,9 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type):
                                                                     pipeline_type),
                                         "%s/fingerprint_and_spp/%s-%s" % (conf_args['root_dir'],
                                                                           conf_args['project_name'],
-                                                                          pipeline_type)],
-                              wrap=False,
+                                                                          pipeline_type)])],
                               depends_on=True,
-                              prolog=['mkdir -p \\\n\t%s/fingerprint_and_spp/%s-%s \\\n\t'
+                              prolog=['mkdir -p \\\n %s/fingerprint_and_spp/%s-%s \\\n '
                                       '%s/fingerprint_and_spp/logs' % (conf_args['root_dir'],
                                                                        conf_args['project_name'],
                                                                        pipeline_type,
