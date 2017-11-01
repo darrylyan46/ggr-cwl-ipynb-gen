@@ -11,6 +11,7 @@ exit
 {%  elif data_source == consts.DATA_SOURCES_MISEQ  %}
 SEQ_PROJECT={{ project_name }}
 BASEMOUNT_TMP=${DATA_HOME}/raw_reads/${SEQ_PROJECT}/bm_tmp
+mkdir -p ${BASEMOUNT_TMP}
 
 # Mount BaseMount
 basemount --config Mitchell.MiSeq ${BASEMOUNT_TMP}
