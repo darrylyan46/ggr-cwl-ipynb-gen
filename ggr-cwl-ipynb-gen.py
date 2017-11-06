@@ -291,6 +291,40 @@ def cwl_slurm_array_gen(conf_args, lib_type, metadata_filename, pipeline_type, n
     return cells
 
 
+def contamination_check(conf_args, metadata_file, lib_type, pipeline_type, n_samples):
+    cells = []
+
+    end_type = pipeline_type.split("-")[0]
+    if end_type == "se":
+        end_type = "single"
+    elif end_type == "pe":
+        end_type = "paired"
+
+    out_file = "touch %s/processing/%s/%s-%s/contamination_log.txt" % (conf_args["root_dir"],
+                                                                       lib_type,
+                                                                       conf_args["project_name"],
+                                                                       pipeline_type)
+    execute_cell = CellSbatch(contents=' \\\n '.join([
+        "%s_%s.sh" % (consts.contamination_script, end_type),
+        "$(echo ${arr[@]})",
+        "%s" % out_file
+    ]),
+        prolog=[" \\\n ".join([
+            "touch %s" % out_file,
+            'echo "Sample E_coli Yeast Mycoplasma" >> %s' % out_file,
+            'arr=$(/bin/ls -1 %s/data/%s/processed_raw_reads/*.fastq)' % (conf_args["root_dir"],
+                                                                          lib_type)]
+        )],
+        depends_on=True,
+        array="0-%d%%20" % (n_samples - 1),
+        partition="new,all",
+        description="#### Contamination check by subsampling (100K reads)")
+
+    cells.extend(execute_cell.to_list())
+
+    return cells
+
+
 def generate_qc_cell(conf_args, lib_type, pipeline_type):
     cells = []
 
@@ -355,65 +389,6 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type):
 
     return cells
 
-
-def generate_qc_cell(conf_args, lib_type, pipeline_type):
-    cells = []
-
-    # Python program has no 'se' or 'pe' abbreviation
-    end_type = pipeline_type.split("-")[0]
-    if end_type == "se":
-        end_type = "single_end"
-    elif end_type == "pe":
-        end_type = "paired_end"
-
-    execute_cell = Cell(contents=["%%bash",
-                                  "source %s alex" % consts.venv_path,
-                                  "cd %s/processing/%s/%s-%s" % (conf_args['root_dir'],
-                                                                 lib_type, conf_args['project_name'],
-                                                                 pipeline_type),
-                                  "python %s/generate_stats_%s_%s.py ./ -samples `/bin/ls -1 *PBC* | cut -d. -f1-6` > qc.txt"
-                                  % (consts.qc_script_dir, lib_type.replace("_", ""), end_type)],
-                        description="### Generate QCs for %s %s" % (lib_type, pipeline_type)
-                        )
-    cells.extend(execute_cell.to_list())
-
-    return cells
-
-
-def generate_plots(conf_args, metadata_file, lib_type, pipeline_type):
-    """
-    Generates cell for creating fingerprint data
-    :param conf_args: Dictionary containing data about directories, project name, etc.
-    :param metadata_file: File path to metadata
-    :param lib_type: Type of assay (RNA, ChIP, ATAC)
-    :param pipeline_type: Type of sequencing pipeline (end, control)
-    :return:
-    """
-    cells = []
-    # Current iteration of web-application only accepts ChIP samples
-    if lib_type != "chip_seq":
-        return []
-
-    execute_cell = CellSbatch(contents=["%s" % consts.plot_script,
-                                        "%s" % metadata_file,
-                                        "%s/processing/%s/%s-%s" % (conf_args['root_dir'],
-                                                                    lib_type,
-                                                                    conf_args['project_name'],
-                                                                    pipeline_type),
-                                        "%s/fingerprint_and_spp/%s-%s" % (conf_args['root_dir'],
-                                                                          conf_args['project_name'],
-                                                                          pipeline_type)],
-                              depends_on=True,
-                              prolog=['mkdir -p %s/fingerprint_and_spp/%s-%s %s/fingerprint_and_spp/logs' %
-                                           (conf_args['root_dir'], conf_args['project_name'],
-                                            pipeline_type, conf_args['root_dir'])],
-                              script_output="%s/fingerprint_and_spp/logs" % conf_args['root_dir'],
-                              description="#### Generate fingerprint plots for %s-%s" % (conf_args['project_name'],
-                                                                                         pipeline_type),
-                              partition="new,all")
-    cells.extend(execute_cell.to_list())
-
-    return cells
 
 
 def get_pipeline_types(samples_df):

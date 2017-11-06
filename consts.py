@@ -30,19 +30,10 @@ with_controls = [False, 'with-control']
 strandnesses = ['unstranded', 'stranded', 'revstranded']
 blacklist_removal = [None, 'blacklist-removal']
 with_sjdb = True
-<<<<<<< HEAD
 
 # Environment configuration
 conda_activate = '/data/reddylab/software/miniconda2/bin/activate'
-=======
-notebook_blurb = "This notebook will create all the necessary files, scripts and folders to pre-process " \
-                 "the aforementioned project. Is designed to be used in a jupyter server deployed in a system running " \
-                 "SLURM. The majority of the scripts and heavy-lifting processes are wrapped up in sbatch scripts." \
-                 "As an end user, in order to pre-process your samples provided in the spread sheet, " \
-                 "you will simply need to *run the entire notebook* (Cell > Run all) and the system should take care " \
-                 "of the rest for you."
-venv_path='/data/reddylab/software/miniconda2/bin/activate'
->>>>>>> Bug fixes with CellSbatch
+contamination_script='/data/reddylab/Darryl/GitHub/reddylab/contamination_script'
 plot_script = '/data/reddylab/Darryl/GitHub/reddylab/countFactors_metadata.sh'
 qc_script_dir = '/data/reddylab/software/cwl/bin'
 HOST_FOR_TUNNELED_DOWNLOAD = "Hardac-xfer.genome.duke.edu"
