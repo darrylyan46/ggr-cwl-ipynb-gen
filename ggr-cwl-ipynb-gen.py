@@ -335,6 +335,7 @@ def generate_qc_cell(conf_args, lib_type, pipeline_type):
     elif end_type == "pe":
         end_type = "paired_end"
 
+<<<<<<< HEAD
     execute_cell = CellSbatch(
         prolog=["source %s alex" % consts.conda_activate],
         contents=list(),
@@ -346,6 +347,16 @@ def generate_qc_cell(conf_args, lib_type, pipeline_type):
             "python %s/generate_stats_%s_%s.py ./ -samples $(/bin/ls -1 *PBC.txt | sed 's@.PBC.txt@@')" % (consts.qc_script_dir, lib_type.replace("_", ""), end_type),
             "> qc.txt"]),
         description="### Generate QCs for %s %s" % (lib_type, pipeline_type)
+=======
+    execute_cell = Cell(contents=["%%bash",
+                                  "source %s alex" % consts.venv_path,
+                                  "cd %s/processing/%s/%s-%s" % (conf_args['root_dir'],
+                                                                 lib_type, conf_args['project_name'],
+                                                                 pipeline_type),
+                                  "python %s/generate_stats_%s_%s.py ./ -samples `/bin/ls -1 *PBC* | cut -d. -f1-6` > qc.txt"
+                                  % (consts.qc_script_dir, lib_type.replace("_", ""), end_type)],
+                        description="### Generate QCs for %s %s" % (lib_type, pipeline_type)
+>>>>>>> 1e69f99272414e08b67f39d985a20be45bd7e182
                         )
     cells.extend(execute_cell.to_list())
 
@@ -376,11 +387,17 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type):
                                                                           conf_args['project_name'],
                                                                           pipeline_type)])],
                               depends_on=True,
+<<<<<<< HEAD
                               prolog=['mkdir -p \\\n %s/fingerprint_and_spp/%s-%s \\\n '
                                       '%s/fingerprint_and_spp/logs' % (conf_args['root_dir'],
                                                                        conf_args['project_name'],
                                                                        pipeline_type,
                                                                        conf_args['root_dir'])],
+=======
+                              prolog=['mkdir -p %s/fingerprint_and_spp/%s-%s %s/fingerprint_and_spp/logs' %
+                                           (conf_args['root_dir'], conf_args['project_name'],
+                                            pipeline_type, conf_args['root_dir'])],
+>>>>>>> 1e69f99272414e08b67f39d985a20be45bd7e182
                               script_output="%s/fingerprint_and_spp/logs" % conf_args['root_dir'],
                               description="#### Generate fingerprint plots for %s-%s" % (conf_args['project_name'],
                                                                                          pipeline_type),
