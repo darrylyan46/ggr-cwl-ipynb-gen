@@ -1,0 +1,33 @@
+%%writefile {{ output_fn }}
+#!/bin/bash
+#SBATCH --job-name=contam_check
+{% if user_duke_email %}#SBATCH --mail-user={{ user_duke_email }}
+#SBATCH --mail-type=FAIL,END
+{% endif %}
+
+ORDER={{ project_name }}
+PROJECT_HOME={{ root_dir }}
+METADATA={{ metadata_filename }}
+PIPELINE_TYPE={{ pipeline_type }}
+LIBRARY_TYPE={{ lib_type }}
+READS_DIR=${PROJECT_HOME}/data/${LIBRARY_TYPE}/${ORDER}
+OUT_FILE="${PROJECT_HOME}/processing/${LIBRARY_TYPE}/${ORDER}-${PIPELINE_TYPE}/contamination_log.txt"
+
+{# Create file that will contain contamination logs #}
+touch ${OUT_FILE}
+
+{# Add header to out file #}
+echo "Sample E_coli Yeast Mycoplasma" >> ${OUT_FILE}
+
+{# Retrieve all sample names #}
+data=($(cat ${METADATA} | sed -n '1!p' | cut -f3))
+{% raw %}
+len=$((${#arr[@]}-1))
+{% endraw %}
+
+{# Run 'sbatch' to do contamination check on all files #}
+sbatch --array=0-${len}%20 -p new,all \
+       {{ script }} \
+       "$(echo ${data[@]})" \
+       ${READS_DIR} \
+       ${OUT_FILE} \

@@ -291,7 +291,8 @@ def cwl_slurm_array_gen(conf_args, lib_type, metadata_filename, pipeline_type, n
     return cells
 
 
-def contamination_check(conf_args, metadata_file, lib_type, pipeline_type, n_samples):
+def contamination_check(conf_args, metadata_filename, lib_type, pipeline_type):
+    func_name = inspect.stack()[0][3]
     cells = []
 
     end_type = pipeline_type.split("-")[0]
@@ -300,25 +301,29 @@ def contamination_check(conf_args, metadata_file, lib_type, pipeline_type, n_sam
     elif end_type == "pe":
         end_type = "paired"
 
-    out_file = "touch %s/processing/%s/%s-%s/contamination_log.txt" % (conf_args["root_dir"],
-                                                                       lib_type,
-                                                                       conf_args["project_name"],
-                                                                       pipeline_type)
-    execute_cell = CellSbatch(contents=' \\\n '.join([
-        "%s_%s.sh" % (consts.contamination_script, end_type),
-        "$(echo ${arr[@]})",
-        "%s" % out_file
-    ]),
-        prolog=[" \\\n ".join([
-            "touch %s" % out_file,
-            'echo "Sample E_coli Yeast Mycoplasma" >> %s' % out_file,
-            'arr=$(/bin/ls -1 %s/data/%s/processed_raw_reads/*.fastq)' % (conf_args["root_dir"],
-                                                                          lib_type)]
-        )],
-        depends_on=True,
-        array="0-%d%%20" % (n_samples - 1),
-        partition="new,all",
-        description="#### Contamination check by subsampling (100K reads)")
+    output_fn = "%s/processing/%s/scripts/contamination_check.%s-%s.sh" % (conf_args['root_dir'],
+                                                       lib_type,
+                                                       conf_args['project_name'],
+                                                       pipeline_type)
+    context = {
+        'output_fn': output_fn,
+        'user_duke_email': conf_args['user_duke_email'],
+        'project_name': conf_args['project_name'],
+        'root_dir': conf_args['root_dir'],
+        'metadata_filename': metadata_filename,
+        'pipeline_type': pipeline_type,
+        'lib_type': lib_type,
+        'script': "%s_%s.sh" % (consts.contamination_script, end_type)
+    }
+    contents = [render('templates/%s.j2' % func_name, context)]
+
+    cell_write_dw_file = Cell(contents=contents, description="#### Create SLURM array to check contamination for %s samples" % end_type)
+    cells.extend(cell_write_dw_file.to_list())
+
+    execute_cell = CellSbatch(contents=[output_fn],
+                              depends_on=True,
+                              partition="new,all",
+                              description="#### Execute contamination check by subsampling (100K reads)")
 
     cells.extend(execute_cell.to_list())
 
@@ -335,10 +340,10 @@ def generate_qc_cell(conf_args, lib_type, pipeline_type):
     elif end_type == "pe":
         end_type = "paired_end"
 
-<<<<<<< HEAD
     execute_cell = CellSbatch(
         prolog=["source %s alex" % consts.conda_activate],
         contents=list(),
+        depends_on=True,
         wrap_command=" \\\n ".join([
             "cd %s/processing/%s/%s-%s;" % (conf_args['root_dir'],
                                          lib_type,
@@ -347,16 +352,6 @@ def generate_qc_cell(conf_args, lib_type, pipeline_type):
             "python %s/generate_stats_%s_%s.py ./ -samples $(/bin/ls -1 *PBC.txt | sed 's@.PBC.txt@@')" % (consts.qc_script_dir, lib_type.replace("_", ""), end_type),
             "> qc.txt"]),
         description="### Generate QCs for %s %s" % (lib_type, pipeline_type)
-=======
-    execute_cell = Cell(contents=["%%bash",
-                                  "source %s alex" % consts.venv_path,
-                                  "cd %s/processing/%s/%s-%s" % (conf_args['root_dir'],
-                                                                 lib_type, conf_args['project_name'],
-                                                                 pipeline_type),
-                                  "python %s/generate_stats_%s_%s.py ./ -samples `/bin/ls -1 *PBC* | cut -d. -f1-6` > qc.txt"
-                                  % (consts.qc_script_dir, lib_type.replace("_", ""), end_type)],
-                        description="### Generate QCs for %s %s" % (lib_type, pipeline_type)
->>>>>>> 1e69f99272414e08b67f39d985a20be45bd7e182
                         )
     cells.extend(execute_cell.to_list())
 
@@ -387,17 +382,9 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type):
                                                                           conf_args['project_name'],
                                                                           pipeline_type)])],
                               depends_on=True,
-<<<<<<< HEAD
-                              prolog=['mkdir -p \\\n %s/fingerprint_and_spp/%s-%s \\\n '
-                                      '%s/fingerprint_and_spp/logs' % (conf_args['root_dir'],
-                                                                       conf_args['project_name'],
-                                                                       pipeline_type,
-                                                                       conf_args['root_dir'])],
-=======
                               prolog=['mkdir -p %s/fingerprint_and_spp/%s-%s %s/fingerprint_and_spp/logs' %
                                            (conf_args['root_dir'], conf_args['project_name'],
                                             pipeline_type, conf_args['root_dir'])],
->>>>>>> 1e69f99272414e08b67f39d985a20be45bd7e182
                               script_output="%s/fingerprint_and_spp/logs" % conf_args['root_dir'],
                               description="#### Generate fingerprint plots for %s-%s" % (conf_args['project_name'],
                                                                                          pipeline_type),
@@ -405,7 +392,6 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type):
     cells.extend(execute_cell.to_list())
 
     return cells
-
 
 
 def get_pipeline_types(samples_df):
@@ -488,8 +474,10 @@ def create_cells(samples_df, conf_args=None):
         if n > 0:
             cells.extend(cwl_slurm_array_gen(conf_args, lib_type, metadata_filename=metadata_file,
                                              pipeline_type=pipeline_type, n_samples=n))
+            cells.extend(contamination_check(conf_args, lib_type=lib_type, metadata_filename=metadata_file,
+                                             pipeline_type=pipeline_type))
             cells.extend(generate_qc_cell(conf_args, lib_type, pipeline_type=pipeline_type))
-	    cells.extend(generate_plots(conf_args, metadata_file=metadata_file,
+            cells.extend(generate_plots(conf_args, metadata_file=metadata_file,
                                         lib_type=lib_type, pipeline_type=pipeline_type))
     return cells
 

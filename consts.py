@@ -33,7 +33,7 @@ with_sjdb = True
 
 # Environment configuration
 conda_activate = '/data/reddylab/software/miniconda2/bin/activate'
-contamination_script='/data/reddylab/Darryl/GitHub/reddylab/contamination_script'
+contamination_script='/data/reddylab/Darryl/GitHub/reddylab/contamination_check'
 plot_script = '/data/reddylab/Darryl/GitHub/reddylab/countFactors_metadata.sh'
 qc_script_dir = '/data/reddylab/software/cwl/bin'
 HOST_FOR_TUNNELED_DOWNLOAD = "Hardac-xfer.genome.duke.edu"
