@@ -284,7 +284,7 @@ def cwl_slurm_array_gen(conf_args, lib_type, metadata_filename, pipeline_type, n
                               description="Execute SLURM array master file",
                               depends_on=True,
                               array="0-%d%%20" % (n_samples - 1),
-                              prolog=["source %s cwltool" % consts.conda_activate],
+                              prolog=["source %s cwl10" % consts.conda_activate],
                               partition="new,all")
     cells.extend(execute_cell.to_list())
 
