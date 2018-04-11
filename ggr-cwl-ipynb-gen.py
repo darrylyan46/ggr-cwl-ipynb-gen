@@ -360,18 +360,15 @@ def get_pipeline_types(samples_df):
     lib_type = samples_df['library type'].iloc[0].lower().replace('-', '_')
     if lib_type == consts.library_type_chip_seq:
         for seq_end in consts.seq_ends:
-            for peak_type in consts.peak_types:
-                for with_control in consts.with_controls:
-                    samples_filter = \
-                        (samples_df['paired-end or single-end'].str.lower() == seq_end) \
-                        & (samples_df['peak type'].str.lower() == peak_type)
-                    if with_control:
-                        samples_filter = samples_filter & (~samples_df['control'].isnull())
-                        pipeline_type = '-'.join([seq_end, peak_type, with_control])
-                    else:
-                        samples_filter = samples_filter & (samples_df['control'].isnull())
-                        pipeline_type = '-'.join([seq_end, peak_type])
-                    yield pipeline_type, np.sum(samples_filter)
+            for with_control in consts.with_controls:
+                samples_filter = samples_df['paired-end or single-end'].str.lower() == seq_end
+                if with_control:
+                    samples_filter = samples_filter & (~samples_df['control'].isnull())
+                    pipeline_type = '-'.join([seq_end, with_control])
+                else:
+                    samples_filter = samples_filter & (samples_df['control'].isnull())
+                    pipeline_type = '-'.join([seq_end])
+                yield pipeline_type, np.sum(samples_filter)
     if lib_type == consts.library_type_rna_seq:
         for seq_end in consts.seq_ends:
             for strandness in consts.strandnesses:
