@@ -250,7 +250,9 @@ def cwl_json_gen(conf_args, lib_type, metadata_filename):
     execute_cell = CellSbatch(contents=[output_fn],
                               description="Execute file to create JSON files",
                               depends_on=True,
-                              script_output="%s/%s_%s_%%a.out" % (logs_dir, conf_args['project_name'],
+                              prolog=["source %s cwl10" % consts.conda_activate],
+                              script_output="%s/%s_%s.out" % (logs_dir,
+                                                                  conf_args['project_name'],
                                                                   inspect.stack()[0][3]))
     cells.extend(execute_cell.to_list())
     return cells
