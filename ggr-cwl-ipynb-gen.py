@@ -251,7 +251,9 @@ def cwl_json_gen(conf_args, lib_type, metadata_filename):
     execute_cell = CellSbatch(contents=[output_fn],
                               description="Execute file to create JSON files",
                               depends_on=True,
-                              script_output="%s/%s_%s_%%a.out" % (logs_dir, conf_args['project_name'],
+                              prolog=["source %s cwl10" % consts.conda_activate],
+                              script_output="%s/%s_%s.out" % (logs_dir,
+                                                                  conf_args['project_name'],
                                                                   inspect.stack()[0][3]))
     cells.extend(execute_cell.to_list())
     return cells
@@ -285,7 +287,7 @@ def cwl_slurm_array_gen(conf_args, lib_type, metadata_filename, pipeline_type, n
                               description="Execute SLURM array master file",
                               depends_on=True,
                               array="0-%d%%20" % (n_samples - 1),
-                              prolog=["source %s cwltool" % consts.conda_activate],
+                              prolog=["source %s cwl10" % consts.conda_activate],
                               partition="new,all")
     cells.extend(execute_cell.to_list())
 
@@ -454,18 +456,15 @@ def get_pipeline_types(samples_df):
     lib_type = samples_df['library type'].iloc[0].lower().replace('-', '_')
     if lib_type == consts.library_type_chip_seq:
         for seq_end in consts.seq_ends:
-            for peak_type in consts.peak_types:
-                for with_control in consts.with_controls:
-                    samples_filter = \
-                        (samples_df['paired-end or single-end'].str.lower() == seq_end) \
-                        & (samples_df['peak type'].str.lower() == peak_type)
-                    if with_control:
-                        samples_filter = samples_filter & (~samples_df['control'].isnull())
-                        pipeline_type = '-'.join([seq_end, peak_type, with_control])
-                    else:
-                        samples_filter = samples_filter & (samples_df['control'].isnull())
-                        pipeline_type = '-'.join([seq_end, peak_type])
-                    yield pipeline_type, np.sum(samples_filter)
+            for with_control in consts.with_controls:
+                samples_filter = samples_df['paired-end or single-end'].str.lower() == seq_end
+                if with_control:
+                    samples_filter = samples_filter & (~samples_df['control'].isnull())
+                    pipeline_type = '-'.join([seq_end, with_control])
+                else:
+                    samples_filter = samples_filter & (samples_df['control'].isnull())
+                    pipeline_type = '-'.join([seq_end])
+                yield pipeline_type, np.sum(samples_filter)
     if lib_type == consts.library_type_rna_seq:
         for seq_end in consts.seq_ends:
             for strandness in consts.strandnesses:

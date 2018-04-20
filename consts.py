@@ -25,7 +25,6 @@ separate_jsons=True
 mem = {'chip_seq': 24000, 'rna_seq': 48000, 'atac_seq': 24000}
 nthreads = {'chip_seq': 16, 'rna_seq': 24, 'atac_seq': 16}
 seq_ends = ['se', 'pe']
-peak_types = ['narrow', 'broad']
 with_controls = [False, 'with-control']
 strandnesses = ['unstranded', 'stranded', 'revstranded']
 blacklist_removal = [None, 'blacklist-removal']

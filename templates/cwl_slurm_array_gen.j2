@@ -27,14 +27,17 @@ export R_LIBS="/data/reddylab/software/R_libs"
 # For Fastqc
 export DISPLAY=:0.0
 
+# Make sure temporary files and folders are created in a specific folder
 mkdir -p {{ root_dir }}/processing/{{ lib_type }}/tmpdirs/tmp-{{ project_name }}-{{ pipeline_type }}-${SLURM_ARRAY_TASK_ID}-
+export TMPDIR="{{ root_dir }}/processing/{{ lib_type }}/tmpdirs/tmp-{{ project_name }}-{{ pipeline_type }}-${SLURM_ARRAY_TASK_ID}-"
 
 cwltool --debug \
     --non-strict \
-    --preserve-environment PATH R_LIBS DISPLAY \
-    --tmpdir-prefix {{ root_dir }}/processing/{{ lib_type }}/tmpdirs/tmp-{{ project_name }}-{{ pipeline_type }}-${SLURM_ARRAY_TASK_ID}- \
-    --tmp-outdir-prefix {{ root_dir }}/processing/{{ lib_type }}/tmpdirs/tmp-{{ project_name }}-{{ pipeline_type }}-${SLURM_ARRAY_TASK_ID}- \
+    --preserve-environment PATH \
+    --preserve-environment R_LIBS \
+    --preserve-environment DISPLAY \
+    --preserve-environment TMPDIR \
     --outdir {{ root_dir }}/processing/{{ lib_type }}/{{ project_name }}-{{ pipeline_type }}  \
     --no-container \
-    /data/reddylab/software/cwl/GGR-cwl/{% if lib_type == 'chip_seq' %}ChIP-seq{% elif lib_type=='rna_seq' %}RNA-seq{% elif lib_type=='atac_seq' %}ATAC-seq{% endif %}_pipeline/pipeline-{{ pipeline_type }}.cwl \
+    /data/reddylab/software/cwl/GGR-cwl/v1.0/{% if lib_type == 'chip_seq' %}ChIP-seq{% elif lib_type=='rna_seq' %}RNA-seq{% elif lib_type=='atac_seq' %}ATAC-seq{% endif %}_pipeline/pipeline-{{ pipeline_type }}.cwl \
     {{ root_dir }}/processing/{{ lib_type }}/jsons/{{ metadata_basename }}-{{ pipeline_type }}-${SLURM_ARRAY_TASK_ID}.json

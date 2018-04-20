@@ -29,7 +29,7 @@ do
     rsync -rvz \
         --copy-links \
         -e ssh \
-        --update ${BASEMOUNT_TMP}/Projects/${EXPERIMENT}/Samples/${LIB_NAME//-/_}/Files/* \
+        --update ${BASEMOUNT_TMP}/Projects/${EXPERIMENT}/Samples/${LIB_NAME}/Files/* \
                  ${DATA_HOME}/raw_reads/${SEQ_PROJECT}/
 done
 
