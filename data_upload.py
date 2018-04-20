@@ -112,9 +112,8 @@ def process_directory(in_dir):
             elif filename.endswith('.cross_corr.txt'):                          # If cross corr data, add to array
                 spp_data_arr.append(file_path)
 
-    if os.path.isfile(qc_file):
-        continue
-    else:
+    # Raise error if QC file was not found. 
+    if not os.path.isfile(qc_file):
         raise IOError("QC file was not found in the data directory (i.e. qc.csv, qc.txt")
 
     # Process QC file into a dataframe
