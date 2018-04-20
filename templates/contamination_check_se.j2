@@ -1,0 +1,37 @@
+%%writefile {{ output_fn }}
+#!/bin/bash
+#SBATCH --job-name=contam_check
+#SBATCH --partition=new,all
+{% if user_duke_email %}
+#SBATCH --mail-user={{ user_duke_email }}
+#SBATCH --mail-type=FAIL,END
+{% endif %}
+#SBATCH --output=/data/reddylab/Darryl/logs/contamination_check_%a.out
+#SBATCH --mem=48000
+
+# Reads a fastq file and takes a subsample of 100K unpaired reads and aligns them for contamination checks.
+
+# Load dependencies and declare parameters
+module load bowtie2
+IFS=' ' read -ra SAMPLES <<< $1
+SAMPLE=${SAMPLES[${SLURM_ARRAY_TASK_ID}]}
+READS_DIR=$2
+in_file=$(/bin/ls -1 ${READS_DIR}/${SAMPLE}*.fastq)
+out_file="$3"
+script_path="/data/reddylab/Darryl/bin/subsample_unpaired_reads.sh"
+
+cd /data/reddylab/Darryl/Genome_Data/bowtie2-indexes
+mkdir -p /data/reddylab/Darryl/misc
+
+# Create a temporary file for the read subsample
+subsample_file="tmp_${SLURM_ARRAY_TASK_ID}.fastq"
+bash ${script_path} ${in_file} 1000000 ${subsample_file}
+unmapped_human_reads_sam="tmp_${SLURM_ARRAY_TASK_ID}.sam"
+unmapped_human_reads="tmp_${SLURM_ARRAY_TASK_ID}.fastq"
+
+# GRChg38, found in Reference_Data/Genomes
+human=$(bowtie2 -x /data/reddylab/Reference_Data/Genomes/hg38/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index -U ${subsample_file} -S ${unmapped_human_reads_sam})
+head ${unmapped_human_reads_sam}
+samtools view -f 4 ${unmapped_human_reads_sam} > "tmp_${SLURM_ARRAY_TASK_ID}.bam"
+samtools fastq -s "tmp_${SLURM_ARRAY_TASK_ID}.bam" > ${unmapped_human_reads}
+head ${unmapped_human_reads}

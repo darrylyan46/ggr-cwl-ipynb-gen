@@ -36,4 +36,5 @@ conda_activate = '/data/reddylab/software/miniconda2/bin/activate'
 contamination_script='/data/reddylab/Darryl/GitHub/reddylab/contamination_check'
 plot_script = '/data/reddylab/Darryl/GitHub/reddylab/countFactors_metadata.sh'
 qc_script_dir = '/data/reddylab/software/cwl/bin'
+data_upload_script = '/data/reddylab/Darryl/GitHub/reddylab/csv_to_mongo.py'
 HOST_FOR_TUNNELED_DOWNLOAD = "Hardac-xfer.genome.duke.edu"

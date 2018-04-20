@@ -22,7 +22,7 @@ echo "Sample E_coli Yeast Mycoplasma" >> ${OUT_FILE}
 {# Retrieve all sample names #}
 data=($(cat ${METADATA} | sed -n '1!p' | cut -f3))
 {% raw %}
-len=$((${#arr[@]}-1))
+len=$((${#data[@]}-1))
 {% endraw %}
 
 {# Run 'sbatch' to do contamination check on all files #}

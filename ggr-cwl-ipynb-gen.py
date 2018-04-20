@@ -10,6 +10,7 @@ import ruamel.yaml
 import consts
 import jinja2
 import inspect
+import glob
 import numpy as np
 
 encoding = sys.getfilesystemencoding()
@@ -300,6 +301,8 @@ def contamination_check(conf_args, metadata_filename, lib_type, pipeline_type):
         end_type = "single"
     elif end_type == "pe":
         end_type = "paired"
+    else:
+        return CellSbatch(contents=[""])
 
     output_fn = "%s/processing/%s/scripts/contamination_check.%s-%s.sh" % (conf_args['root_dir'],
                                                        lib_type,
@@ -322,6 +325,7 @@ def contamination_check(conf_args, metadata_filename, lib_type, pipeline_type):
 
     execute_cell = CellSbatch(contents=[output_fn],
                               depends_on=True,
+                              array="0-%d%%20" % 
                               partition="new,all",
                               description="#### Execute contamination check by subsampling (100K reads)")
 
@@ -331,6 +335,7 @@ def contamination_check(conf_args, metadata_filename, lib_type, pipeline_type):
 
 
 def generate_qc_cell(conf_args, lib_type, pipeline_type):
+    func_name = inspect.stack()[0][3]
     cells = []
 
     # Python program has no 'se' or 'pe' abbreviation
@@ -339,20 +344,36 @@ def generate_qc_cell(conf_args, lib_type, pipeline_type):
         end_type = "single_end"
     elif end_type == "pe":
         end_type = "paired_end"
+    else:
+        return CellSbatch(contents=[""])
 
-    execute_cell = CellSbatch(
-        prolog=["source %s alex" % consts.conda_activate],
-        contents=list(),
-        depends_on=True,
-        wrap_command=" \\\n ".join([
-            "cd %s/processing/%s/%s-%s;" % (conf_args['root_dir'],
-                                         lib_type,
-                                         conf_args['project_name'],
-                                         pipeline_type),
-            "python %s/generate_stats_%s_%s.py ./ -samples $(/bin/ls -1 *PBC.txt | sed 's@.PBC.txt@@')" % (consts.qc_script_dir, lib_type.replace("_", ""), end_type),
-            "> qc.txt"]),
-        description="### Generate QCs for %s %s" % (lib_type, pipeline_type)
-                        )
+
+    output_fn = '%s/processing/%s/scripts/qc_generate.%s-%s.sh' % (conf_args["root_dir"],
+                                                                   lib_type,
+                                                                   conf_args["project_name"],
+                                                                   pipeline_type)
+    qc_type = lib_type.replace("_", "")
+    context = {
+        'output_fn': output_fn,
+        "conda_activate": consts.conda_activate,
+        'root_dir': conf_args["root_dir"],
+        "library_type": lib_type,
+        "project_name": conf_args["project_name"],
+        "pipeline_type": pipeline_type,
+        "qc_script_dir": consts.qc_script_dir,
+        "qc_type": qc_type,
+        "end_type": end_type
+    }
+    contents = [render('templates/%s.j2' % func_name, context)]
+
+    cell_write_dw_file = Cell(contents=contents, description="#### Create QC generating script")
+    cells.extend(cell_write_dw_file.to_list())
+
+    execute_cell = CellSbatch(contents=[output_fn],
+                              depends_on=True,
+                              partition="new,all",
+                              description="Generate QCs for %s-%s" % (conf_args["project_name"], pipeline_type))
+
     cells.extend(execute_cell.to_list())
 
     return cells
@@ -367,32 +388,67 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type):
     :param pipeline_type: Type of sequencing pipeline (end, control)
     :return:
     """
+    func_name = inspect.stack()[0][3]
     cells = []
     # Current iteration of web-application only accepts ChIP samples
     if lib_type != "chip_seq":
-        return []
+        return CellSbatch(contents=[""])
 
-    execute_cell = CellSbatch(contents=[' \\\n '.join(["%s" % consts.plot_script,
-                                        "%s" % metadata_file,
-                                        "%s/processing/%s/%s-%s" % (conf_args['root_dir'],
-                                                                    lib_type,
-                                                                    conf_args['project_name'],
-                                                                    pipeline_type),
-                                        "%s/fingerprint_and_spp/%s-%s" % (conf_args['root_dir'],
-                                                                          conf_args['project_name'],
-                                                                          pipeline_type)])],
+    input_directory = "{}/processing/{}/{}-{}".format(conf_args['root_dir'],
+                                                      lib_type,
+                                                      conf_args['project_name'],
+                                                      pipeline_type)
+    output_directory = "{}/fingerprint_and_spp/{}/{}-{}".format(conf_args['root_dir'],
+                                                      lib_type,
+                                                      conf_args['project_name'],
+                                                      pipeline_type)
+
+    output_fn = '%s/processing/%s/scripts/generate_plot.%s-%s.sh' % (conf_args["root_dir"],
+                                                                      lib_type,
+                                                                      conf_args["project_name"],
+                                                                      pipeline_type)
+
+    context = {
+        'output_fn': output_fn,
+        'env_activate': consts.conda_activate,
+        'root_dir': conf_args['root_dir'],
+        'library_type': lib_type,
+        'project_name': conf_args['project_name'],
+        'pipeline_type': pipeline_type,
+        'metadata_file': metadata_file,
+        'input_dir': input_directory,
+        'output_dir': output_directory
+    }
+    contents = [render('templates/%s.j2' % func_name, context)]
+    cell_write_dw_file = Cell(contents=contents, description="#### Create plot generating script")
+    cells.extend(cell_write_dw_file.to_list())
+
+    with open(metadata_file) as f:
+        n_samples = len(f.readlines())
+
+    execute_cell = CellSbatch(contents=[output_fn],
                               depends_on=True,
-                              prolog=['mkdir -p %s/fingerprint_and_spp/%s-%s %s/fingerprint_and_spp/logs' %
-                                           (conf_args['root_dir'], conf_args['project_name'],
-                                            pipeline_type, conf_args['root_dir'])],
-                              script_output="%s/fingerprint_and_spp/logs" % conf_args['root_dir'],
-                              description="#### Generate fingerprint plots for %s-%s" % (conf_args['project_name'],
-                                                                                         pipeline_type),
-                              partition="new,all")
+                              array="0-%d%%5" % (n_samples - 1),
+                              prolog=["source %s alex" % consts.conda_activate],
+                              partition="new,all",
+                              description="Generate plots and data for website")
     cells.extend(execute_cell.to_list())
 
     return cells
 
+
+def data_upload(lib_type):
+    # Only upload data to web-app if it is ChIP-seq 
+    if lib_type != "chip_seq":
+        return CellSbatch(contents=[""])
+
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    contents = script_dir + "/data_upload.py -i " + 
+
+    execute_cell = CellSbatch(contents=[os.path.dirname(os.path.realpath(__file__))],
+                              depends_on=True,
+                              partition="new,all",
+                              description="### Upload ChIP-seq to web-application")
 
 def get_pipeline_types(samples_df):
     lib_type = samples_df['library type'].iloc[0].lower().replace('-', '_')
@@ -474,11 +530,12 @@ def create_cells(samples_df, conf_args=None):
         if n > 0:
             cells.extend(cwl_slurm_array_gen(conf_args, lib_type, metadata_filename=metadata_file,
                                              pipeline_type=pipeline_type, n_samples=n))
-            cells.extend(contamination_check(conf_args, lib_type=lib_type, metadata_filename=metadata_file,
-                                             pipeline_type=pipeline_type))
             cells.extend(generate_qc_cell(conf_args, lib_type, pipeline_type=pipeline_type))
             cells.extend(generate_plots(conf_args, metadata_file=metadata_file,
                                         lib_type=lib_type, pipeline_type=pipeline_type))
+            # Contamination check portion is not functional yet
+            #cells.extend(contamination_check(conf_args, lib_type=lib_type, metadata_filename=metadata_file,
+                                             #pipeline_type=pipeline_type))
     return cells
 
 
@@ -488,7 +545,7 @@ def make_notebook(outfile, metadata, conf_args=None):
 
     cells = []
     # Create a notebook by Library type existing in the metadata file
-    for samples_df in get_samples_by_libray_type(metadata, conf_args['sep']):
+    for samples_df in get_samples_by_library_type(metadata, conf_args['sep']):
         cells.extend(create_cells(samples_df, conf_args=conf_args))
 
     nb['worksheets'].append(nbf.new_worksheet(cells=cells))
@@ -497,7 +554,7 @@ def make_notebook(outfile, metadata, conf_args=None):
         nbformat.write(nb, _)
 
 
-def get_samples_by_libray_type(metadata_file, sep='\t'):
+def get_samples_by_library_type(metadata_file, sep='\t'):
     """
     Parse a metadata file (either a spreadsheet or a tab-delimited file.
 
