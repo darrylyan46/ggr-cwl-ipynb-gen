@@ -4,6 +4,7 @@ import os, csv
 import argparse
 import pandas as pd
 import base64
+import consts
 
 # Python script and command line tool for compiling fingerprint and QC data from ChIP-seq
 # experiments. Make sure to activate the 'alex' virtual environment from miniconda using
@@ -111,8 +112,10 @@ def process_directory(in_dir):
             elif filename.endswith('.cross_corr.txt'):                          # If cross corr data, add to array
                 spp_data_arr.append(file_path)
 
-    if not qc_file:
-        return None
+    if os.path.isfile(qc_file):
+        continue
+    else:
+        raise IOError("QC file was not found in the data directory (i.e. qc.csv, qc.txt")
 
     # Process QC file into a dataframe
     try:
@@ -125,6 +128,7 @@ def process_directory(in_dir):
             # Read data into Pandas dataframe
             df = pd.read_csv(f, delimiter=dialect.delimiter, header=None,
                              names=column_names[0], usecols=column_names[1], engine='python')
+    # Catch if the filename is not an actual file, but a symlink
     except IOError:
         with open(os.readlink(qc_file), 'rb') as f:
             # Find delimiter using Sniffer class
@@ -135,6 +139,8 @@ def process_directory(in_dir):
             # Read data into Pandas dataframe
             df = pd.read_csv(f, delimiter=dialect.delimiter, header=None,
                              names=column_names[0], usecols=column_names[1], engine='python')
+
+    # Index the dataframe by sample
     df.set_index('sample', inplace=True)
 
     # If there are fingerprint files, add to array
@@ -181,12 +187,18 @@ def process_directory(in_dir):
 
 
 def main():
-    # Command line arguments
     parser = argparse.ArgumentParser('Generates QC metric summary file for available ChIP-seq samples')
     parser.add_argument('-i', '--in_dirs', required=True, nargs='+',
                         help='Directory(ies)for fingerprint data')
+    parser.add_argument('-u', '--uri', required=True,
+                        help='URI for database upload')
+    parser.add_argument('-d', '--database', required=True,
+                        help='Database name for upload')
+    parser.add_argument('-c', '--collection', required=True,
+                        help='Collection name for database')
     args = parser.parse_args()
 
+    # Process each given data directory
     df = pd.DataFrame()
     for i in range(len(args.in_dirs)):
         if os.path.isdir(args.in_dirs[i]):
@@ -196,13 +208,18 @@ def main():
     df.rename(columns={'diff._enrichment':'diff_enrichment'}, inplace=True)
 
     # Convert Pandas dataframe into list of dictionaries
-    data = df.to_dict(orient='records')
+    data = df.to_dict(orient='index')
 
     # Insert documents (list of dicts) to web-application database
-    uri = '<INSERT URI HERE>'
+    uri = args.uri
     client = MongoClient[uri]
-    coll = client['<INSERT DB NAME HERE>']['<INSERT COLLECTION NAME>']
-    coll.insert_many(data)
+    coll = client[args.database][args.collection]
+    
+    # For each sample, replace if it exists, otherwise insert (upsert)
+    for sample_name in data:
+        sample = data[sample_name]
+        sample['sample'] = sample_name
+        coll.replace_one({'sample': sample_name}, sample, upsert=True)
 
     return
     

@@ -3,3 +3,7 @@ root_dir: /data/reddylab/Alex/GGR
 sep: "\t"
 user_duke_email: aeb84@duke.edu
 secondary_root_dir: /data/reddylab/projects/GGR
+uri: <INSERT URI HERE>
+secret_key: <INSERT KEY HERE>
+database: <INSERT DB NAME HERE>
+collection: <INSERT COLLECTION NAME HERE>

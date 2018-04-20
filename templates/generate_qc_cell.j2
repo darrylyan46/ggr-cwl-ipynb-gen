@@ -1,7 +1,7 @@
 %%writefile {{ output_fn }}
 #!/bin/bash
 #SBATCH --job-name=qc
-#SBATCH --output={{ root_dir }}/processing/{{ library_type }}/logs/{{ project_name }}_qc_gen.out
+#SBATCH --output={{ root_dir }}/processing/{{ library_type }}/logs/{{ project_name }}-{{ pipeline_type }}_qc_gen.out
 
 source {{ conda_activate }} alex
 cd {{ root_dir }}/processing/{{ library_type }}/{{ project_name }}-{{ pipeline_type }}
