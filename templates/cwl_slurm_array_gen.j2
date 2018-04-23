@@ -17,12 +17,8 @@ export PATH="/data/reddylab/software/bamtools-2.2.3/bin/:$PATH"
 {% else %}export PATH="/data/reddylab/software/phantompeakqualtools/:$PATH"{% endif %}
 
 module load bedtools2
-module load R/3.2.0-gcb01
 module load fastqc
 module load samtools
-
-# For SPP
-export R_LIBS="/data/reddylab/software/R_libs"
 
 # For Fastqc
 export DISPLAY=:0.0
@@ -34,7 +30,6 @@ export TMPDIR="{{ root_dir }}/processing/{{ lib_type }}/tmpdirs/tmp-{{ project_n
 cwltool --debug \
     --non-strict \
     --preserve-environment PATH \
-    --preserve-environment R_LIBS \
     --preserve-environment DISPLAY \
     --preserve-environment TMPDIR \
     --outdir {{ root_dir }}/processing/{{ lib_type }}/{{ project_name }}-{{ pipeline_type }}  \
