@@ -38,9 +38,7 @@ FILE_LINE=$(sed -n "${LINE_NUM}p" ${METADATA})
 FLOWCELL=$(echo "$FILE_LINE" | cut -f${FLOWCELL_INDEX})
 FACTOR=$(echo "$FILE_LINE" | cut -f${FACTOR_INDEX})
 FACTOR_FILE=$(/bin/ls -1 ${IN_DIR}/${FACTOR}*.bam.bai | sed "s/.bai//")
-IP_CTRL=$(echo "$FILE_LINE" | cut -f${IP_CTRL_INDEX})
 INPUT_CTRL=$(echo "$FILE_LINE" | cut -f${INPUT_CTRL_INDEX})
-IP_CTRL_FILE=$(/bin/ls -1 ${IN_DIR}/${IP_CTRL}*bam)
 INPUT_CTRL_FILE=$(/bin/ls -1 ${IN_DIR}/${INPUT_CTRL}*bam)
 echo "Factor is: ${FACTOR}, file is: ${FACTOR_FILE}"
 echo "Flowcell is: ${FLOWCELL}, IP control is: ${IP_CTRL}, Input control is: ${INPUT_CTRL}"
@@ -53,32 +51,9 @@ HEADER="Factor\tFlowcell\tIp_control\tInput_control\tTimestamp"
 echo -e ${HEADER} > ${METADATA_FILE}
 echo -e "${FACTOR}\t${FLOWCELL}\t${IP_CTRL}\t${INPUT_CTRL}\t${TIMESTAMP}" >> ${METADATA_FILE}
 
-# Case where sample has both controls
-if [ -n "${IP_CTRL}" ] && [ -n "${INPUT_CTRL}" ];
-then
-        echo "Sample, ${FACTOR_FILE}, has IP control ${IP_CTRL} and \
-        input control ${INPUT_CTRL}"
-        echo "Sample has both Input and IP controls, ${INPUT_CTRL_FILE} and ${IP_CTRL_FILE}"
-        plotFingerprint -b ${FACTOR_FILE} ${INPUT_CTRL_FILE} ${IP_CTRL_FILE} \
-        --labels ${FACTOR} ${INPUT_CTRL} ${IP_CTRL} \
-        --outQualityMetrics ${OUT_DIR}/${FACTOR}_QCmetrics.txt \
-        --JSDsample ${INPUT_CTRL} \
-        -T "Fingerprint of ${FACTPR}" \
-        -plot ${OUT_DIR}/${FACTOR}.png \
-        --outRawCounts ${OUT_DIR}/${FACTOR}_counts.tab
-# Case where sample has w/ IP control and no Input control
-elif [ -n "${IP_CTRL}" ] && [ -z "${INPUT_CTRL}" ];
-then
-        echo "Sample, ${FACTOR_FILE}, has IP control ${IP_CTRL}"
-        plotFingerprint -b ${FACTOR_FILE} ${IP_CTRL_FILE} \
-        --labels ${FACTOR} ${IP_CTRL} \
-        --outQualityMetrics ${OUT_DIR}/${FACTOR}_QCmetrics.txt \
-        --JSDsample ${IP_CTRL} \
-        -T "Fingerprint of ${FACTOR}" \
-        -plot ${OUT_DIR}/${FACTOR}.png \
-        --outRawCounts ${OUT_DIR}/${FACTOR}_counts.tab
-# Case where sample has w/ Input control and no IP control
-elif [ -z "${IP_CTRL}" ] && [ -n "${INPUT_CTRL}" ];
+
+# Case where sample has w/ Input control
+if [ -n "${INPUT_CTRL}" ];
 then
         echo "Sample, ${FACTOR_FILE}, has Input control ${INPUT_CTRL}"
         plotFingerprint -b ${FACTOR_FILE} ${INPUT_CTRL_FILE} \
