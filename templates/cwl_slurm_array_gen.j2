@@ -15,6 +15,7 @@ export PATH="/data/reddylab/software/rsem-1.2.21/:$PATH"
 export PATH="/data/reddylab/software/subread-1.4.6-p4-Linux-x86_64/bin/:$PATH"
 export PATH="/data/reddylab/software/bamtools-2.2.3/bin/:$PATH"
 {% else %}export PATH="/data/reddylab/software/phantompeakqualtools-1.2/:$PATH"{% endif %}
+export PATH="{{ consts.conda_activate | replace("bin/activate", "envs/%s/bin" % consts.conda_environment)}}:$PATH"
 
 module load bedtools2
 module load fastqc
