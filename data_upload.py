@@ -12,6 +12,9 @@ import consts
 # run full workflow, run the `countFactors_standard.sh` that outputs data directories
 # then run this script on those outputs.
 
+# VERSION 1.0 Notes: pandas.dataframe.set_value() method is deprecated and will be removed
+# in later iterations. 
+
 
 CWD = os.getcwd() + "/"
 OUT_DIR = CWD + "QC_summary/"
@@ -211,7 +214,7 @@ def main():
 
     # Insert documents (list of dicts) to web-application database
     uri = args.uri
-    client = MongoClient[uri]
+    client = MongoClient(uri)
     coll = client[args.database][args.collection]
     
     # For each sample, replace if it exists, otherwise insert (upsert)
