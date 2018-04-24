@@ -1,5 +1,5 @@
-from csv_to_mongo import csv_to_mongo
 from pymongo import MongoClient
+import datetime
 import os, csv
 import argparse
 import pandas as pd
@@ -218,6 +218,7 @@ def main():
     for sample_name in data:
         sample = data[sample_name]
         sample['sample'] = sample_name
+        sample['last_modified'] =  datetime.datetime.utcnow()
         coll.replace_one({'sample': sample_name}, sample, upsert=True)
 
     return

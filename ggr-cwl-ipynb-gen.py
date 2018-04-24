@@ -402,10 +402,7 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type, n_samples)
                                                       lib_type,
                                                       conf_args['project_name'],
                                                       pipeline_type)
-    output_directory = "{}/fingerprint_and_spp/{}/{}-{}".format(conf_args['root_dir'],
-                                                      lib_type,
-                                                      conf_args['project_name'],
-                                                      pipeline_type)
+    output_directory = input_directory
 
     output_fn = '%s/processing/%s/scripts/generate_plot.%s-%s.sh' % (conf_args["root_dir"],
                                                                       lib_type,
@@ -416,7 +413,7 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type, n_samples)
         'output_fn': output_fn,
         'env_activate': consts.conda_activate,
         'root_dir': conf_args['root_dir'],
-        'library_type': lib_type,
+        'lib_type': lib_type,
         'project_name': conf_args['project_name'],
         'pipeline_type': pipeline_type,
         'metadata_file': metadata_file,

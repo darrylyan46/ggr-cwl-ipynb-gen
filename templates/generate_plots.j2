@@ -16,7 +16,7 @@ IN_DIR={{ input_dir }}
 OUT_DIR={{ output_dir }}
 
 # Initialize and read in the indices for each field
-FLOWCELL_INDEX=-1; FACTOR_INDEX=-1; IP_CTRL_INDEX=-1; INPUT_CTRL_INDEX=-1
+FLOWCELL_INDEX=-1; FACTOR_INDEX=-1; INPUT_CTRL_INDEX=-1
 HEADER=$(head -n 1 ${METADATA} | tr '[:upper:]' '[:lower:]')
 IFS=$'\t' read -ra ADDR <<< "$HEADER"
 for i in "${!ADDR[@]}"; do
@@ -25,15 +25,13 @@ for i in "${!ADDR[@]}"; do
                 FACTOR_INDEX=$((i+1))
         elif [[ ${ADDR[$i]} = 'experiment name' ]] || [[ ${ADDR[$i]} = 'sequencing core project' ]] ; then
                 FLOWCELL_INDEX=$((i+1))
-        elif [[ ${ADDR[$i]} = 'ip control' ]] ; then
-        	IP_CTRL_INDEX=$((i+1))
-        elif [[ ${ADDR[$i]} = 'control' ]] || [[ ${ADDR[$i]} = 'input control' ]] ; then
+        elif [[ ${ADDR[$i]} = 'Control' ]]; then
                 INPUT_CTRL_INDEX=$((i+1))
         fi
 done
 
 # Add 2 to skip 0th line and 1st line which is header
-LINE_NUM=$((SLURM_ARRAY_TASK_ID+2))
+LINE_NUM=$((${SLURM_ARRAY_TASK_ID}+2))
 FILE_LINE=$(sed -n "${LINE_NUM}p" ${METADATA})
 FLOWCELL=$(echo "$FILE_LINE" | cut -f${FLOWCELL_INDEX})
 FACTOR=$(echo "$FILE_LINE" | cut -f${FACTOR_INDEX})
@@ -41,15 +39,15 @@ FACTOR_FILE=$(/bin/ls -1 ${IN_DIR}/${FACTOR}*.bam.bai | sed "s/.bai//")
 INPUT_CTRL=$(echo "$FILE_LINE" | cut -f${INPUT_CTRL_INDEX})
 INPUT_CTRL_FILE=$(/bin/ls -1 ${IN_DIR}/${INPUT_CTRL}*bam)
 echo "Factor is: ${FACTOR}, file is: ${FACTOR_FILE}"
-echo "Flowcell is: ${FLOWCELL}, IP control is: ${IP_CTRL}, Input control is: ${INPUT_CTRL}"
+echo "Flowcell is: ${FLOWCELL}, Input control is: ${INPUT_CTRL}"
 
 # Write sample metadata to file with name, timestamp and
 # additional information
 METADATA_FILE="${OUT_DIR}/${FACTOR}_metadata.txt"
 TIMESTAMP=$(stat -c%z ${METADATA} | cut -d' ' -f1)
-HEADER="Factor\tFlowcell\tIp_control\tInput_control\tTimestamp"
+HEADER="Factor\tFlowcell\tInput_control\tTimestamp"
 echo -e ${HEADER} > ${METADATA_FILE}
-echo -e "${FACTOR}\t${FLOWCELL}\t${IP_CTRL}\t${INPUT_CTRL}\t${TIMESTAMP}" >> ${METADATA_FILE}
+echo -e "${FACTOR}\t${FLOWCELL}\t${INPUT_CTRL}\t${TIMESTAMP}" >> ${METADATA_FILE}
 
 
 # Case where sample has w/ Input control
@@ -59,7 +57,9 @@ then
         plotFingerprint -b ${FACTOR_FILE} ${INPUT_CTRL_FILE} \
         --labels ${FACTOR} ${INPUT_CTRL} \
         --outQualityMetrics ${OUT_DIR}/${FACTOR}_QCmetrics.txt \
-        --Jase where sample has both controls
+        -T "Fingerprint of ${FACTOR}" \
+        -plot ${OUT_DIR}/${FACTOR}.png \
+        --outRawCounts ${OUT_DIR}/${FACTOR}_counts.tab
 # Case where sample has no control
 else
         echo "Sample, ${FACTOR_FILE}, has no controls"
