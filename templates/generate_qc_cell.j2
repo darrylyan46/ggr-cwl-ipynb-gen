@@ -1,11 +1,11 @@
 %%writefile {{ output_fn }}
 #!/bin/bash
 #SBATCH --job-name=qc
-#SBATCH --output={{ root_dir }}/processing/{{ library_type }}/logs/{{ project_name }}-{{ pipeline_type }}_qc_gen.out
+#SBATCH --output={{ root_dir }}/processing/{{ library_type }}/logs/qc_gen.{{ project_name }}-{{ pipeline_type }}.out
 
 source {{ conda_activate }} alex
 cd {{ root_dir }}/processing/{{ library_type }}/{{ project_name }}-{{ pipeline_type }}
 
 python {{ qc_script_dir }}/generate_stats_{{ qc_type }}_{{ end_type }}.py ./ \
-    -samples $(/bin/ls -1 *PBC.txt | \
-     sed 's@.PBC.txt@@') > qc.txt
+    -samples $(/bin/ls -1 *PBC.txt | sed 's@.PBC.txt@@') \
+> qc.txt

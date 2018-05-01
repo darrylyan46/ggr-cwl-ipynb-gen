@@ -1,15 +1,11 @@
 %%writefile {{ output_fn }}
 #!/bin/bash
 #SBATCH --job-name=generate_fingerplot
-#SBATCH --output={{ root_dir }}/processing/{{ lib_type }}/logs/{{ project_name }}-{{ pipeline_type }}-generate-plot-%a.out
-#SBATCH --partition=new,all
+#SBATCH --output={{ root_dir }}/processing/{{ lib_type }}/logs/generate-plot.{{ project_name }}-{{ pipeline_type }}-%a.out
 
 # This script is a subscript ran from `countFactors_standard.sh` for
 # data insertion into the ChIP-DB web application. Intended for samples
 # that follow the Reddy Lab sequencing sample naming conventions.
-
-# Software dependencies
-source {{ env_activate }} alex
 
 METADATA={{ metadata_file }}
 IN_DIR={{ input_dir }}
