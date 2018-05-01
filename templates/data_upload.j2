@@ -1,0 +1,6 @@
+%%writefile {{ output_fn }}
+#!/bin/bash
+#SBATCH --job-name=data_upload
+#SBATCH --output={{ root_dir }}/processing/{{ library_type }}/logs/data_upload.{{ project_name }}-{{ pipeline_type }}.out
+
+python {{ script_dir }}/data_upload.py -i {{ data_dir }} -u {{ uri }} -d {{ database }} -c {{ collection }}
