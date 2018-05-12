@@ -251,7 +251,8 @@ def cwl_json_gen(conf_args, lib_type, metadata_filename):
     execute_cell = CellSbatch(contents=[output_fn],
                               description="Execute file to create JSON files",
                               depends_on=True,
-                              prolog=["source %s cwl10" % consts.conda_activate],
+                              prolog=["source %s %s" % (consts.conda_activate,
+                                                        consts.conda_environment)],
                               script_output="%s/%s_%s.out" % (logs_dir,
                                                                   conf_args['project_name'],
                                                                   inspect.stack()[0][3]))
@@ -276,7 +277,8 @@ def cwl_slurm_array_gen(conf_args, lib_type, metadata_filename, pipeline_type, n
         'lib_type': lib_type,
         'mem': consts.mem[lib_type.lower()],
         'nthreads': consts.nthreads[lib_type.lower()],
-        'pipeline_type': pipeline_type
+        'pipeline_type': pipeline_type,
+        'consts': consts
     }
     contents = [render('templates/%s.j2' % func_name, context)]
 
@@ -287,7 +289,8 @@ def cwl_slurm_array_gen(conf_args, lib_type, metadata_filename, pipeline_type, n
                               description="Execute SLURM array master file",
                               depends_on=True,
                               array="0-%d%%20" % (n_samples - 1),
-                              prolog=["source %s cwl10" % consts.conda_activate],
+                              prolog=["source %s %s" % (consts.conda_activate,
+                                                        consts.conda_environment)],
                               partition="new,all")
     cells.extend(execute_cell.to_list())
 
@@ -402,10 +405,7 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type, n_samples)
                                                       lib_type,
                                                       conf_args['project_name'],
                                                       pipeline_type)
-    output_directory = "{}/fingerprint_and_spp/{}/{}-{}".format(conf_args['root_dir'],
-                                                      lib_type,
-                                                      conf_args['project_name'],
-                                                      pipeline_type)
+    output_directory = input_directory
 
     output_fn = '%s/processing/%s/scripts/generate_plot.%s-%s.sh' % (conf_args["root_dir"],
                                                                       lib_type,
@@ -416,7 +416,7 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type, n_samples)
         'output_fn': output_fn,
         'env_activate': consts.conda_activate,
         'root_dir': conf_args['root_dir'],
-        'library_type': lib_type,
+        'lib_type': lib_type,
         'project_name': conf_args['project_name'],
         'pipeline_type': pipeline_type,
         'metadata_file': metadata_file,
