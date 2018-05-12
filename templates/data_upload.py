@@ -1,5 +1,5 @@
+from csv_to_mongo import csv_to_mongo
 from pymongo import MongoClient
-import datetime
 import os, csv
 import argparse
 import pandas as pd
@@ -211,14 +211,13 @@ def main():
 
     # Insert documents (list of dicts) to web-application database
     uri = args.uri
-    client = MongoClient(uri)
+    client = MongoClient[uri]
     coll = client[args.database][args.collection]
     
     # For each sample, replace if it exists, otherwise insert (upsert)
     for sample_name in data:
         sample = data[sample_name]
         sample['sample'] = sample_name
-	sample['last_modified'] = datetime.datetime.utcnow()
         coll.replace_one({'sample': sample_name}, sample, upsert=True)
 
     return
