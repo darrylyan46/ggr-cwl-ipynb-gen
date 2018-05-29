@@ -118,7 +118,7 @@ def process_directory(in_dir):
 
     # Raise error if QC file was not found. 
     if not os.path.isfile(qc_file):
-        logging.ERROR("QC file was not found in the data directory (i.e. qc.csv, qc.txt)")
+        logging.error("QC file was not found in the data directory (i.e. qc.csv, qc.txt)")
         raise IOError("QC file was not found in the data directory (i.e. qc.csv, qc.txt)")
 
     # Process QC file into a dataframe
@@ -203,7 +203,7 @@ def main():
     parser.add_argument('-o', '--output', required=True, help="Filename for output log")
     args = parser.parse_args()
 
-    logging.basicConfig(filename=args.output, level=logging.DEBUG)
+    logging.basicConfig(filename=args.output)
 
 
     # Process each given data directory
@@ -235,7 +235,7 @@ def main():
         sample = data[sample_name]
         sample['sample'] = sample_name
         sample['last_modified'] =  datetime.datetime.utcnow()
-        logging.INFO("Uploading sample: %s" % sample)
+        logging.info("Uploading sample: %s" % sample)
         sample_coll.replace_one({'sample': sample_name}, sample, upsert=True)
 
         # Set flowcell data
@@ -245,10 +245,10 @@ def main():
         flowcell_data['samples'].append(sample_name)
 
     # Upsert the flowcell
-    logging.INFO("Uploading flowcell: %s" % flowcell_data)
+    logging.info("Uploading flowcell: %s" % flowcell_data)
     flowcell_coll.replace_one({'name': flowcell_name}, flowcell_data, upsert=True)
 
-    logging.INFO("Data upload terminated successfully")
+    logging.info("Data upload terminated successfully")
 
 
     return
