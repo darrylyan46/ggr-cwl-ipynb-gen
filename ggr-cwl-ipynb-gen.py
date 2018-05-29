@@ -296,49 +296,6 @@ def cwl_slurm_array_gen(conf_args, lib_type, metadata_filename, pipeline_type, n
 
     return cells
 
-"""
-def contamination_check(conf_args, metadata_filename, lib_type, pipeline_type):
-    func_name = inspect.stack()[0][3]
-    cells = []
-
-    end_type = pipeline_type.split("-")[0]
-    if end_type == "se":
-        end_type = "single"
-    elif end_type == "pe":
-        end_type = "paired"
-    else:
-        return CellSbatch(contents=[""])
-
-    output_fn = "%s/processing/%s/scripts/contamination_check.%s-%s.sh" % (conf_args['root_dir'],
-                                                       lib_type,
-                                                       conf_args['project_name'],
-                                                       pipeline_type)
-    context = {
-        'output_fn': output_fn,
-        'user_duke_email': conf_args['user_duke_email'],
-        'project_name': conf_args['project_name'],
-        'root_dir': conf_args['root_dir'],
-        'metadata_filename': metadata_filename,
-        'pipeline_type': pipeline_type,
-        'lib_type': lib_type,
-        'script': "%s_%s.sh" % (consts.contamination_script, end_type)
-    }
-    contents = [render('templates/%s.j2' % func_name, context)]
-
-    cell_write_dw_file = Cell(contents=contents, description="#### Create SLURM array to check contamination for %s samples" % end_type)
-    cells.extend(cell_write_dw_file.to_list())
-
-    execute_cell = CellSbatch(contents=[output_fn],
-                              depends_on=True,
-                              array="0-%d%%20" % 
-                              partition="new,all",
-                              description="#### Execute contamination check by subsampling (100K reads)")
-
-    cells.extend(execute_cell.to_list())
-
-    return cells
-"""
-
 
 def generate_qc_cell(conf_args, lib_type, pipeline_type):
     func_name = inspect.stack()[0][3]
@@ -569,9 +526,6 @@ def create_cells(samples_df, conf_args=None):
             cells.extend(generate_plots(conf_args, metadata_file=metadata_file,
                                         lib_type=lib_type, pipeline_type=pipeline_type, n_samples=n))
             cells.extend(data_upload(conf_args, lib_type, pipeline_type))
-            # Contamination check portion not functional yet
-            #cells.extend(contamination_check(conf_args, lib_type=lib_type, metadata_filename=metadata_file,
-                                             #pipeline_type=pipeline_type))
 
     return cells
 

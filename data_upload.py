@@ -88,7 +88,7 @@ def standardize_header(arr):
     return elements, useColumns
 
 
-def process_directory(in_dir, logger):
+def process_directory(in_dir):
     """
     Processes data in directory, returns as Pandas dataframe
     :param in_dir: Input data directory, String
@@ -118,7 +118,7 @@ def process_directory(in_dir, logger):
 
     # Raise error if QC file was not found. 
     if not os.path.isfile(qc_file):
-        logger.ERROR("QC file was not found in the data directory (i.e. qc.csv, qc.txt)")
+        logging.ERROR("QC file was not found in the data directory (i.e. qc.csv, qc.txt)")
         raise IOError("QC file was not found in the data directory (i.e. qc.csv, qc.txt)")
 
     # Process QC file into a dataframe
@@ -191,7 +191,6 @@ def process_directory(in_dir, logger):
 
 
 def main():
-    logger = logging.basicConfig(filename='data_upload.out', level=logging.DEBUG)
     parser = argparse.ArgumentParser('Generates QC metric summary file for available ChIP-seq samples')
     parser.add_argument('-i', '--in_dirs', required=True, nargs='+',
                         help='Directory(ies)for fingerprint data')
@@ -201,13 +200,17 @@ def main():
                         help='Database name for upload')
     parser.add_argument('-c', '--collection', required=True,
                         help='Collection name for database')
+    parser.add_argument('-o', '--output', required=True, help="Filename for output log")
     args = parser.parse_args()
+
+    logging.basicConfig(filename=args.output, level=logging.DEBUG)
+
 
     # Process each given data directory
     df = pd.DataFrame()
     for i in range(len(args.in_dirs)):
         if os.path.isdir(args.in_dirs[i]):
-            new_df = process_directory(args.in_dirs[i], logger)
+            new_df = process_directory(args.in_dirs[i])
             df = df.append(new_df)
     factor_names = [row.split('.')[0] for row in df.index.values]
     df.rename(columns={'diff._enrichment':'diff_enrichment'}, inplace=True)
@@ -231,7 +234,7 @@ def main():
         sample = data[sample_name]
         sample['sample'] = sample_name
         sample['last_modified'] =  datetime.datetime.utcnow()
-        logger.INFO("Uploading sample: %s" % sample)
+        logging.INFO("Uploading sample: %s" % sample)
         sample_coll.replace_one({'sample': sample_name}, sample, upsert=True)
 
         # Set flowcell data
@@ -241,8 +244,10 @@ def main():
         flowcell_data['samples'].append(sample_name)
 
     # Upsert the flowcell
-    logger.INFO("Uploading flowcell: %s" % flowcell_data)
+    logging.INFO("Uploading flowcell: %s" % flowcell_data)
     flowcell_coll.replace_one({'name': flowcell_name}, flowcell_data, upsert=True)
+
+    logging.INFO("Data upload terminated successfully")
 
 
     return
