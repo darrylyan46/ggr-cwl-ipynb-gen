@@ -5,6 +5,7 @@ import argparse
 import pandas as pd
 import base64
 import consts
+import logging
 
 # Python script and command line tool for compiling fingerprint and QC data from ChIP-seq
 # experiments. Make sure to activate the 'alex' virtual environment from miniconda using
@@ -87,7 +88,7 @@ def standardize_header(arr):
     return elements, useColumns
 
 
-def process_directory(in_dir):
+def process_directory(in_dir, logger):
     """
     Processes data in directory, returns as Pandas dataframe
     :param in_dir: Input data directory, String
@@ -117,7 +118,8 @@ def process_directory(in_dir):
 
     # Raise error if QC file was not found. 
     if not os.path.isfile(qc_file):
-        raise IOError("QC file was not found in the data directory (i.e. qc.csv, qc.txt")
+        logger.ERROR("QC file was not found in the data directory (i.e. qc.csv, qc.txt)")
+        raise IOError("QC file was not found in the data directory (i.e. qc.csv, qc.txt)")
 
     # Process QC file into a dataframe
     try:
@@ -189,6 +191,7 @@ def process_directory(in_dir):
 
 
 def main():
+    logger = logging.basicConfig(filename='data_upload.out', level=logging.DEBUG)
     parser = argparse.ArgumentParser('Generates QC metric summary file for available ChIP-seq samples')
     parser.add_argument('-i', '--in_dirs', required=True, nargs='+',
                         help='Directory(ies)for fingerprint data')
@@ -204,7 +207,7 @@ def main():
     df = pd.DataFrame()
     for i in range(len(args.in_dirs)):
         if os.path.isdir(args.in_dirs[i]):
-            new_df = process_directory(args.in_dirs[i])
+            new_df = process_directory(args.in_dirs[i], logger)
             df = df.append(new_df)
     factor_names = [row.split('.')[0] for row in df.index.values]
     df.rename(columns={'diff._enrichment':'diff_enrichment'}, inplace=True)
@@ -228,6 +231,7 @@ def main():
         sample = data[sample_name]
         sample['sample'] = sample_name
         sample['last_modified'] =  datetime.datetime.utcnow()
+        logger.INFO("Uploading sample: %s" % sample)
         sample_coll.replace_one({'sample': sample_name}, sample, upsert=True)
 
         # Set flowcell data
@@ -237,6 +241,7 @@ def main():
         flowcell_data['samples'].append(sample_name)
 
     # Upsert the flowcell
+    logger.INFO("Uploading flowcell: %s" % flowcell_data)
     flowcell_coll.replace_one({'name': flowcell_name}, flowcell_data, upsert=True)
 
 

@@ -51,7 +51,7 @@ echo -e "${FACTOR}\t${FLOWCELL}\t${INPUT_CTRL}\t${TIMESTAMP}" >> ${METADATA_FILE
 
 
 # Case where sample has w/ Input control
-if [ -n "${INPUT_CTRL}" ];
+if [ $INPUT_CTRL_INDEX != -1 ];
 then
         echo "Sample, ${FACTOR_FILE}, has Input control ${INPUT_CTRL}"
         plotFingerprint -b ${FACTOR_FILE} ${INPUT_CTRL_FILE} \
