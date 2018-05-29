@@ -203,7 +203,7 @@ def main():
     parser.add_argument('-o', '--output', required=True, help="Filename for output log")
     args = parser.parse_args()
 
-    logging.basicConfig(filename=args.output)
+    logging.basicConfig(filename=args.output, level=logging.DEBUG)
 
 
     # Process each given data directory
