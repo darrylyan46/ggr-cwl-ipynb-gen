@@ -235,7 +235,7 @@ def main():
         sample = data[sample_name]
         sample['sample'] = sample_name
         sample['last_modified'] =  datetime.datetime.utcnow()
-        logging.info("Uploading sample: %s" % sample)
+        logging.info("Uploading sample: %s" % sample_name)
         sample_coll.replace_one({'sample': sample_name}, sample, upsert=True)
 
         # Set flowcell data
