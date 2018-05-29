@@ -203,7 +203,7 @@ def main():
     parser.add_argument('-o', '--output', required=True, help="Filename for output log")
     args = parser.parse_args()
 
-    logging.basicConfig(filename=args.output)
+    logging.basicConfig(filename=args.output, level=logging.DEBUG)
 
 
     # Process each given data directory
@@ -234,7 +234,7 @@ def main():
         sample = data[sample_name]
         sample['sample'] = sample_name
         sample['last_modified'] =  datetime.datetime.utcnow()
-        logging.info("Uploading sample: %s" % sample)
+        logging.info("Uploading sample: %s" % sample_name)
         sample_coll.replace_one({'sample': sample_name}, sample, upsert=True)
 
         # Set flowcell data
