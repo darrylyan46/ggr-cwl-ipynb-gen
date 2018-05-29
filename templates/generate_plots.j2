@@ -38,6 +38,11 @@ FACTOR=$(echo "$FILE_LINE" | cut -f${FACTOR_INDEX})
 FACTOR_FILE=$(/bin/ls -1 ${IN_DIR}/${FACTOR}*.bam.bai | sed "s/.bai//")
 INPUT_CTRL=$(echo "$FILE_LINE" | cut -f${INPUT_CTRL_INDEX})
 INPUT_CTRL_FILE=$(/bin/ls -1 ${IN_DIR}/${INPUT_CTRL}*bam)
+if [ $INPUT_CTRL_INDEX == -1 ];
+then
+        INPUT_CTRL=""
+        INPUT_CTRL_FILE=""
+fi
 echo "Factor is: ${FACTOR}, file is: ${FACTOR_FILE}"
 echo "Flowcell is: ${FLOWCELL}, Input control is: ${INPUT_CTRL}"
 
