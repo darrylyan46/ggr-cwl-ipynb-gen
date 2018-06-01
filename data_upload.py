@@ -5,6 +5,7 @@ import argparse
 import pandas as pd
 import base64
 import consts
+import logging
 
 # Python script and command line tool for compiling fingerprint and QC data from ChIP-seq
 # experiments. Make sure to activate the 'alex' virtual environment from miniconda using
@@ -117,7 +118,8 @@ def process_directory(in_dir):
 
     # Raise error if QC file was not found. 
     if not os.path.isfile(qc_file):
-        raise IOError("QC file was not found in the data directory (i.e. qc.csv, qc.txt")
+        logging.error("QC file was not found in the data directory (i.e. qc.csv, qc.txt)")
+        raise IOError("QC file was not found in the data directory (i.e. qc.csv, qc.txt)")
 
     # Process QC file into a dataframe
     try:
@@ -198,7 +200,11 @@ def main():
                         help='Database name for upload')
     parser.add_argument('-c', '--collection', required=True,
                         help='Collection name for database')
+    parser.add_argument('-o', '--output', required=True, help="Filename for output log")
     args = parser.parse_args()
+
+    logging.basicConfig(filename=args.output, level=logging.DEBUG)
+
 
     # Process each given data directory
     df = pd.DataFrame()
@@ -215,14 +221,34 @@ def main():
     # Insert documents (list of dicts) to web-application database
     uri = args.uri
     client = MongoClient(uri)
-    coll = client[args.database][args.collection]
-    
+    sample_coll = client[args.database][args.collection]
+    flowcell_coll = client[args.database]["flowcell"]
+
+    # Initialize a flowcell data
+    flowcell_name = ""
+    flowcell_data = {"samples": []}
+
     # For each sample, replace if it exists, otherwise insert (upsert)
     for sample_name in data:
+        # Set sample data
         sample = data[sample_name]
         sample['sample'] = sample_name
         sample['last_modified'] =  datetime.datetime.utcnow()
-        coll.replace_one({'sample': sample_name}, sample, upsert=True)
+        logging.info("Uploading sample: %s" % sample_name)
+        sample_coll.replace_one({'sample': sample_name}, sample, upsert=True)
+
+        # Set flowcell data
+        flowcell_name = sample['flowcell']
+        flowcell_data['name'] = flowcell_name
+        flowcell_data['date'] = sample['timestamp']
+        flowcell_data['samples'].append(sample_name)
+
+    # Upsert the flowcell
+    logging.info("Uploading flowcell: %s" % flowcell_data)
+    flowcell_coll.replace_one({'name': flowcell_name}, flowcell_data, upsert=True)
+
+    logging.info("Data upload terminated successfully")
+
 
     return
     
