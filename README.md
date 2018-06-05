@@ -17,8 +17,8 @@ For a full list of options:
 ```
 $ python ggr-cwl-ipynb-gen.py -h
 usage: Generator of Jupyter notebooks to execute CWL pre-processing pipelines
-       [-h] -o OUT -c CONF_FILE -m METADATA [-f] [--metadata-sep SEP]
-       [--project-name PROJECT_NAME]
+       [-h] -o OUT -c CONF_FILE -m METADATA [-f] [-n] [--metadata-sep SEP]
+       [--project-name PROJECT_NAME] [--data-from {sftp,miseq,other,dukeds}]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -28,11 +28,15 @@ optional arguments:
   -m METADATA, --metadata METADATA
                         Metadata file with samples information
   -f, --force           Force to overwrite output file
+  -n, --no-upload       Avoids uploading generated data to database when
+                        specified
   --metadata-sep SEP    Separator for metadata file (when different than Excel
                         spread sheet)
   --project-name PROJECT_NAME
                         Project name (by default, basename of metadata file
                         name)
+  --data-from {sftp,miseq,other,dukeds}
+                        Choices: sftp, miseq, other, dukeds
 ```
 
 ### Dependencies
