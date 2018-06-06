@@ -6,7 +6,7 @@ mkdir -p ${DATA_HOME}/raw_reads/
 {% if data_source == consts.DATA_SOURCES_SFTP %}
 read CORE_USER CORE_PROJECT CORE_PASS <<< $(cut -f 1,2,3 $METADATA | tail -n+2 | sort -u)
 cd ${DATA_HOME}/raw_reads/
-lftp -u ${CORE_USER},${CORE_PASS} -e "mirror --only-missing ${CORE_USER}/${CORE_PROJECT}; exit" "sftp://${CORE_USER}@dnaseq2.igsp.duke.edu:22"
+lftp -u ${CORE_USER},${CORE_PASS} -e "mirror --parallel=16 --only-missing ${CORE_USER}/${CORE_PROJECT}; exit" "sftp://${CORE_USER}@dnaseq2.igsp.duke.edu"
 exit
 {%  elif data_source == consts.DATA_SOURCES_MISEQ  %}
 SEQ_PROJECT={{ project_name }}

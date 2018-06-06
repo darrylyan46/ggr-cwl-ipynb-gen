@@ -144,6 +144,7 @@ def download_fastq_files(conf_args, lib_type, metadata_fn=None):
 
     logs_dir = "%s/processing/%s/logs" % (conf_args['root_dir'], lib_type)
     execute_cell = CellSbatch(contents=list(),
+                              partition="new,all",
                               wrap_command="ssh %s@%s 'sh %s'" % (conf_args['user'],
                                                                   consts.HOST_FOR_TUNNELED_DOWNLOAD,
                                                                   download_fn),
