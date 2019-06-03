@@ -41,7 +41,8 @@ class Cell(object):
         cells = []
         if self.description:
             cells.append(nbf.new_text_cell('markdown', source=self.description))
-        cells.append(nbf.new_code_cell(input=self.header + self.contents))
+        if self.contents:
+            cells.append(nbf.new_code_cell(input=self.header + self.contents))
         return cells
 
 
@@ -475,16 +476,27 @@ def get_pipeline_types(samples_df):
 
 def data_acquisition_cells(conf_args, lib_type, metadata_file, nsamples):
     cells = []
-    cells.extend(download_fastq_files(conf_args,
-                                      lib_type,
-                                      metadata_fn=metadata_file))
-    cells.extend(ungzip_fastq_files(conf_args, lib_type,
-                                    metadata_filename=metadata_file,
-                                    num_samples=nsamples))
-    cells.extend(merge_fastq_files(conf_args,
-                                   lib_type,
-                                   metadata_filename=metadata_file,
-                                   num_samples=nsamples))
+    if conf_args['data_from'] != consts.DATA_SOURCES_LOCAL:
+        cells.extend(download_fastq_files(conf_args,
+                                          lib_type,
+                                          metadata_fn=metadata_file))
+        cells.extend(ungzip_fastq_files(conf_args, lib_type,
+                                        metadata_filename=metadata_file,
+                                        num_samples=nsamples))
+        cells.extend(merge_fastq_files(conf_args,
+                                       lib_type,
+                                       metadata_filename=metadata_file,
+                                       num_samples=nsamples))
+    else:
+        download_fn = "%s/data/%s/processed_raw_reads/%s" % (
+            conf_args['root_dir'], lib_type,
+            conf_args['project_name'])
+        warning_cell =  Cell(contents=None,
+                             description=["### FASTQ files already available locally!!",
+                                           "Please, make sure the FASTQ files are correctly named, decompressed and located/symlinked in:",
+                                          "", "**", download_fn, "**"])
+        cells.extend(warning_cell.to_list())
+
     return cells
 
 
@@ -543,9 +555,13 @@ def get_samples_by_library_type(metadata_file, sep='\t'):
     :return: generator of panda's dataframe
     """
     try:
-        md = pd.read_excel(metadata_file)
+        md = pd.read_excel(metadata_file,
+                           true_values=['Yes', 'Y', 'yes', 'y', 1],
+                           false_values=['No', 'N', 'no', 'n', 0])
     except XLRDError:
-        md = pd.read_csv(metadata_file.name, sep=sep)
+        md = pd.read_csv(metadata_file.name,
+                         true_values=['Yes', 'Y', 'yes', 'y', 1],
+                         false_values=['No', 'N', 'no', 'n', 0], sep=sep)
 
     md.columns = [x.lower() for x in md.columns]
     named_cols = [c for c in md.columns if not c.startswith('unnamed: ')]
