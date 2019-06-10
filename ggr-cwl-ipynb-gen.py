@@ -472,6 +472,11 @@ def get_pipeline_types(samples_df):
                     pipeline_type = '-'.join([seq_end])
                     samples_filter = samples_filter & (samples_df['blacklist removal'].isnull())
                 yield pipeline_type, np.sum(samples_filter)
+    if lib_type == consts.library_type_starr_seq:
+        for seq_end in consts.seq_ends:
+            samples_filter = (samples_df['paired-end or single-end'].str.lower() == seq_end)
+            pipeline_type = '-'.join([seq_end])
+            yield pipeline_type, np.sum(samples_filter)
 
 
 def data_acquisition_cells(conf_args, lib_type, metadata_file, nsamples):

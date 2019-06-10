@@ -14,6 +14,7 @@ data_sources = [
 library_type_chip_seq = 'chip_seq'
 library_type_rna_seq = 'rna_seq'
 library_type_atac_seq = 'atac_seq'
+library_type_starr_seq = 'starr_seq'
 notebook_blurb = "This notebook will create all the necessary files, scripts and folders to pre-process " \
                  "the aforementioned project. Is designed to be used in a jupyter server deployed in a system running " \
                  "SLURM. The majority of the scripts and heavy-lifting processes are wrapped up in sbatch scripts." \
@@ -24,8 +25,18 @@ notebook_blurb = "This notebook will create all the necessary files, scripts and
 # Pipelines configuration
 star_genome='/data/reddylab/Reference_Data/Genomes/hg38/STAR_genome_sjdbOverhang_49_novelSJDB'
 separate_jsons=True
-mem = {'chip_seq': 24000, 'rna_seq': 48000, 'atac_seq': 24000}
-nthreads = {'chip_seq': 16, 'rna_seq': 24, 'atac_seq': 16}
+mem = {
+    'chip_seq': 24000,
+    'rna_seq': 48000,
+    'atac_seq': 24000,
+    'starr_seq': 32000
+}
+nthreads = {
+    'chip_seq': 16,
+    'rna_seq': 24,
+    'atac_seq': 16,
+    'starr_seq': 24
+}
 seq_ends = ['se', 'pe']
 with_controls = [False, 'with-control']
 strandnesses = ['unstranded', 'stranded', 'revstranded']
