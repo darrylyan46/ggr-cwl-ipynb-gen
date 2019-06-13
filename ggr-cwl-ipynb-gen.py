@@ -474,9 +474,17 @@ def get_pipeline_types(samples_df):
                 yield pipeline_type, np.sum(samples_filter)
     if lib_type == consts.library_type_starr_seq:
         for seq_end in consts.seq_ends:
-            samples_filter = (samples_df['paired-end or single-end'].str.lower() == seq_end)
-            pipeline_type = '-'.join([seq_end])
-            yield pipeline_type, np.sum(samples_filter)
+            for with_umis in consts.with_umis:
+                samples_filter = (samples_df['paired-end or single-end'].str.lower() == seq_end)
+                if with_umis:
+                    pipeline_type = '-'.join([seq_end, with_umis])
+                    if 'umis' in samples_df.columns:
+                        samples_filter = samples_filter & ~samples_df['umis']
+                else:
+                    pipeline_type = '-'.join([seq_end])
+                    if 'umis' in samples_df.columns:
+                        samples_filter = samples_filter & samples_df['umis']
+                yield pipeline_type, np.sum(samples_filter)
 
 
 def data_acquisition_cells(conf_args, lib_type, metadata_file, nsamples):

@@ -42,6 +42,7 @@ with_controls = [False, 'with-control']
 strandnesses = ['unstranded', 'stranded', 'revstranded']
 blacklist_removal = [None, 'blacklist-removal']
 with_sjdb = True
+with_umis = [None, 'umis']
 
 # Environment configuration
 conda_activate = '/data/reddylab/software/miniconda2/bin/activate'
