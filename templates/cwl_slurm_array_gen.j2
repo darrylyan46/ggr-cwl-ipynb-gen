@@ -20,6 +20,7 @@ export PATH="{{ consts.conda_activate | replace("bin/activate", "envs/%s/bin" % 
 module load bedtools2
 module load fastqc
 module load samtools
+module load bowtie2
 
 # For Fastqc
 export DISPLAY=:0.0
