@@ -479,11 +479,11 @@ def get_pipeline_types(samples_df):
                 if with_umis:
                     pipeline_type = '-'.join([seq_end, with_umis])
                     if 'umis' in samples_df.columns:
-                        samples_filter = samples_filter & ~samples_df['umis']
+                        samples_filter = samples_filter & samples_df['umis']
                 else:
                     pipeline_type = '-'.join([seq_end])
                     if 'umis' in samples_df.columns:
-                        samples_filter = samples_filter & samples_df['umis']
+                        samples_filter = samples_filter & ~samples_df['umis']
                 yield pipeline_type, np.sum(samples_filter)
 
 
