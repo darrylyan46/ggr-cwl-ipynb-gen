@@ -49,7 +49,7 @@ do
         rm -f ${sample_files}
 
         # Rename samples with our sample Names
-        dest_filename=$(basename ${merged} | sed -r 's/\_S[0-9]+//; s/\_(R[12])\_/\.\1\./; s/\.[0-9]+\.fastq/\.fastq/')
+        dest_filename=$(basename ${merged} | sed -r 's/\_S[0-9]+//; s/\_(R[123])\_/\.\1\./; s/\.[0-9]+\.fastq/\.fastq/')
         mv ${merged} ${dest_filename}
 
         cleaned_dest_filename=${dest_filename/${sample_seq_name/ /}/${sample_name/ /}}
