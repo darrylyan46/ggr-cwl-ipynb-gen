@@ -414,6 +414,7 @@ def data_upload(conf_args, lib_type, pipeline_type):
       'library_type': lib_type,
       'project_name': conf_args['project_name'],
       'script_dir': script_dir,
+      'conf': args.conf_file,
       'conda_activate': consts.conda_activate,
       'data_dir': data_dir,
       'uri': conf_args['uri'],
