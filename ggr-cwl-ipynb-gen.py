@@ -117,17 +117,6 @@ def save_metadata(samples_df, conf_args, lib_type):
     cell = Cell(contents=contents, description="Save metadata file")
     cells.extend(cell.to_list())
 
-    if 'secondary_root_dir' in conf_args:
-        contents = [
-            "%%bash",
-            "cp %s %s/data/%s/metadata/" % (outfile,
-                                            conf_args['secondary_root_dir'],
-                                            lib_type)
-        ]
-        cell = Cell(contents=contents,
-                    description="Copy metadata file to secondary destination")
-        cells.extend(cell.to_list())
-
     return cells, outfile
 
 
@@ -356,7 +345,7 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type, n_samples)
     cells = []
     # Current iteration of web-application only accepts ChIP samples
     if lib_type != "chip_seq":
-        return CellSbatch(contents=[""])
+        return []
 
     input_directory = "{}/processing/{}/{}-{}".format(conf_args['root_dir'],
                                                       lib_type,
@@ -388,7 +377,7 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type, n_samples)
     execute_cell = CellSbatch(contents=[output_fn],
                               depends_on=True,
                               array="0-%d%%5" % (n_samples - 1),
-                              prolog=["source %s alex" % consts.conda_activate],
+                              prolog=["source %s %s" % (consts.conda_activate, consts.conda_environment)],
                               partition="new,all",
                               description="Generate plots and data for website")
     cells.extend(execute_cell.to_list())
@@ -397,34 +386,35 @@ def generate_plots(conf_args, metadata_file, lib_type, pipeline_type, n_samples)
 
 
 def data_upload(conf_args, lib_type, pipeline_type):
-  """
-  Function for generating a cell that uploads notebook generated data
-  to database. Can be avoided with usage of tag "-n".
-  """
-  func_name = inspect.stack()[0][3]
-  cells = []
+    """
+    Function for generating a cell that uploads notebook generated data
+    to database. Can be avoided with usage of tag "-n".
+    """
+    func_name = inspect.stack()[0][3]
+    cells = []
 
-  # Only upload data to web-app if it is ChIP-seq 
-  if lib_type != "chip_seq" or not conf_args["upload"]:
-    return CellSbatch(contents=[""])
-    
-  output_fn = '%s/processing/%s/scripts/%s_%s-%s.sh' % (conf_args["root_dir"],
-                                                                   lib_type,
-                                                                   func_name,
-                                                                   conf_args["project_name"],
-                                                                   pipeline_type)
+    # Only upload data to web-app if it is ChIP-seq
+    if lib_type != "chip_seq" or not conf_args["upload"]:
+        return []
 
-  script_dir = os.path.dirname(os.path.realpath(__file__))
-  data_dir = "{}/processing/chip_seq/{}-{}".format(conf_args['root_dir'],
+    output_fn = '%s/processing/%s/scripts/%s_%s-%s.sh' % (conf_args["root_dir"],
+                                                          lib_type,
+                                                          func_name,
+                                                          conf_args["project_name"],
+                                                          pipeline_type)
+
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    data_dir = "{}/processing/chip_seq/{}-{}".format(conf_args['root_dir'],
                                                    conf_args['project_name'], pipeline_type)
 
-  context = {
+    context = {
       'output_fn': output_fn,
       'root_dir': conf_args['root_dir'],
       'pipeline_type': pipeline_type,
       'library_type': lib_type,
       'project_name': conf_args['project_name'],
       'script_dir': script_dir,
+      'conf': args.conf_file,
       'conda_activate': consts.conda_activate,
       'data_dir': data_dir,
       'uri': conf_args['uri'],
@@ -432,17 +422,18 @@ def data_upload(conf_args, lib_type, pipeline_type):
       'collection': conf_args['collection']
       }
 
-  contents = [render('templates/%s.j2' % func_name, context)]
-  cell_write_dw_file = Cell(contents=contents, description="#### Create data upload script")
-  cells.extend(cell_write_dw_file.to_list())
+    contents = [render('templates/%s.j2' % func_name, context)]
+    cell_write_dw_file = Cell(contents=contents, description="#### Create data upload script")
+    cells.extend(cell_write_dw_file.to_list())
 
-  execute_cell = CellSbatch(contents=[output_fn],
-                            depends_on=True,
-                            partition="new,all",
+    execute_cell = CellSbatch(contents=[output_fn],
+                              depends_on=True,
+                              prolog=["source %s alex" % consts.conda_activate],
+                              partition="new,all",
                             description="### Upload ChIP-seq to web-application")
-  cells.extend(execute_cell.to_list())
+    cells.extend(execute_cell.to_list())
 
-  return cells
+    return cells
 
 
 def get_pipeline_types(samples_df):
