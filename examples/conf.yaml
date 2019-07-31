@@ -2,6 +2,8 @@ user: djy3
 root_dir: /data/reddylab/Darryl/GGR
 sep: "\t"
 user_duke_email: djy3@duke.edu
+username: <INSERT USERNAME HERE>
+password: <INSERT PASSWORD HERE>
 uri: <INSERT URI HERE>
 secret_key: <INSERT KEY HERE>
 database: <INSERT DB NAME HERE>

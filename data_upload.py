@@ -196,7 +196,10 @@ def process_directory(in_dir):
 
 def main():
     parser = argparse.ArgumentParser('Generates QC metric summary file for available ChIP-seq samples')
-    parser.add_argument('--conf-file', required=True, type=file, help='YAML configuration file (see examples)')
+    parser.add_argument('--username', required=True,
+			help="Username for database")
+    parser.add_argument('--pass', required=True,
+			help="Password for database (matched w/ user)") 
     parser.add_argument('-i', '--in_dirs', required=True, nargs='+',
                         help='Directory(ies)for fingerprint data')
     parser.add_argument('-u', '--uri', required=True,
@@ -207,9 +210,6 @@ def main():
                         help='Collection name for database')
     parser.add_argument('-o', '--output', required=True, help="Filename for output log")
     args = parser.parse_args()
-
-    conf_args = ruamel.yaml.load(args.conf_file, Loader=ruamel.yaml.Loader)
-
 
     logging.basicConfig(filename=args.output, level=logging.DEBUG)
 
@@ -229,8 +229,8 @@ def main():
     # Insert documents (list of dicts) to web-application database
     uri = args.uri
     client = MongoClient(uri,
-                         username=conf_args["user"],
-                         password=conf_args["password"])
+                         username=args.username,
+                         password=args.pass)
     sample_coll = client[args.database][args.collection]
     flowcell_coll = client[args.database]["flowcell"]
 

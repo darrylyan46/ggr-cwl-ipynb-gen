@@ -4,4 +4,5 @@
 #SBATCH --output={{ root_dir }}/processing/{{ library_type }}/logs/data_upload.{{ project_name }}-{{ pipeline_type }}.out
 
 source {{ conda_activate }} alex
-python {{ script_dir }}/data_upload.py -i {{ data_dir }} --conf-file {{ conf }} -u {{ uri }} -d {{ database }} -c {{ collection }} -o {{ root_dir }}/processing/{{ library_type }}/logs/{{ project_name }}-{{ pipeline_type }}_data_upload.log
+python {{ script_dir }}/data_upload.py -i {{ data_dir }} --username {{ username }} --pass {{ password }} -u {{ uri }} -d {{ database }} -c {{ collection }} -o {{ root_dir }}/processing/{{ library_type }}/logs/{{ project_name }}-{{ pipeline_type }}_data_upload.log
+
