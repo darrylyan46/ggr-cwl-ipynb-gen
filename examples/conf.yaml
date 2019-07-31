@@ -1,7 +1,7 @@
-user: aeb84
-root_dir: /data/reddylab/Alex/GGR
+user: djy3
+root_dir: /data/reddylab/Darryl/GGR
 sep: "\t"
-user_duke_email: aeb84@duke.edu
+user_duke_email: djy3@duke.edu
 uri: <INSERT URI HERE>
 secret_key: <INSERT KEY HERE>
 database: <INSERT DB NAME HERE>
